@@ -215,6 +215,53 @@ def cmd_gray_release(args):
         cmd_start_monitor(argparse.Namespace(release_id=release_id))
 
 
+def cmd_monitor_dispatch(args):
+    """monitor 命令分发：支持老写法和新写法"""
+    sub = getattr(args, 'monitor_subcommand', None)
+
+    if sub:
+        if sub == 'daemon':
+            cmd_monitor_daemon(args)
+        elif sub == 'check':
+            cmd_check_monitor(args)
+        elif sub == 'add':
+            cmd_monitor_add(args)
+        elif sub == 'remove':
+            cmd_monitor_remove(args)
+        elif sub == 'list':
+            cmd_monitor_list(args)
+        return
+
+    rid = getattr(args, 'release_id', None)
+
+    if args.check and rid:
+        cmd_check_monitor(args)
+        return
+
+    if args.start and rid:
+        cmd_monitor_add(args)
+        return
+
+    if args.stop and rid:
+        cmd_monitor_remove(args)
+        return
+
+    if not sub and not rid and not args.check:
+        cmd_monitor_list(args)
+        return
+
+    print("用法:")
+    print("  老写法: python main.py monitor --release-id ID --check [--force-abnormal] [--auto-rollback]")
+    print("  老写法: python main.py monitor --release-id ID --start")
+    print("  老写法: python main.py monitor --release-id ID --stop")
+    print()
+    print("  新写法: python main.py monitor check --release-id ID [--force-abnormal] [--auto-rollback]")
+    print("  新写法: python main.py monitor add --release-id ID")
+    print("  新写法: python main.py monitor remove --release-id ID")
+    print("  新写法: python main.py monitor list")
+    print("  新写法: python main.py monitor daemon start/stop/status")
+
+
 def cmd_check_monitor(args):
     """立即执行一次监控检查"""
     release_id = args.release_id
@@ -744,7 +791,13 @@ def build_parser():
     p_release.set_defaults(func=cmd_gray_release)
 
     p_monitor = subparsers.add_parser('monitor', help='监控相关')
-    monitor_sub = p_monitor.add_subparsers(dest='monitor_subcommand')
+    p_monitor.add_argument('--release-id', type=int, help='发布单ID(兼容老写法)')
+    p_monitor.add_argument('--check', action='store_true', help='执行一次检查(兼容老写法)')
+    p_monitor.add_argument('--force-abnormal', action='store_true', help='模拟异常(兼容老写法)')
+    p_monitor.add_argument('--auto-rollback', action='store_true', help='异常自动回滚(兼容老写法)')
+    p_monitor.add_argument('--start', action='store_true', help='启动监控(兼容老写法)')
+    p_monitor.add_argument('--stop', action='store_true', help='停止监控(兼容老写法)')
+    monitor_sub = p_monitor.add_subparsers(dest='monitor_subcommand', required=False)
 
     p_mc = monitor_sub.add_parser('check', help='立即执行一次检查')
     p_mc.add_argument('--release-id', type=int, required=True, help='发布单ID')
@@ -774,6 +827,8 @@ def build_parser():
     p_dt.set_defaults(func=cmd_monitor_daemon)
     p_dr = daemon_sub.add_parser('run', help='前台运行守护进程(内部用)')
     p_dr.set_defaults(func=cmd_monitor_daemon)
+
+    p_monitor.set_defaults(func=cmd_monitor_dispatch)
 
     p_rollback = subparsers.add_parser('rollback', help='手动回滚')
     p_rollback.add_argument('--release-id', type=int, required=True, help='发布单ID')
