@@ -170,8 +170,12 @@ class Database:
                         added_at TEXT NOT NULL,
                         last_check_at TEXT,
                         next_check_at TEXT,
-                        check_count INTEGER DEFAULT 0
+                        check_count INTEGER DEFAULT 0,
+                        check_interval_seconds INTEGER DEFAULT 300
                     );
+
+                    -- 兼容旧数据库，新增列如果不存在
+                    -- (SQLite 不支持 IF NOT EXISTS 在 ADD COLUMN，用异常捕获跳过)
 
                     CREATE INDEX IF NOT EXISTS idx_releases_status ON releases(status);
                     CREATE INDEX IF NOT EXISTS idx_releases_created ON releases(created_at);
@@ -180,6 +184,13 @@ class Database:
                     CREATE INDEX IF NOT EXISTS idx_monitor_time ON monitor_records(check_time);
                     CREATE INDEX IF NOT EXISTS idx_rollback_release ON rollback_records(release_id);
                 """)
+
+                try:
+                    cursor.execute("ALTER TABLE active_monitors ADD COLUMN check_interval_seconds INTEGER DEFAULT 300")
+                    log.info("active_monitors 表新增 check_interval_seconds 列")
+                except sqlite3.OperationalError:
+                    pass
+
                 log.info("数据库初始化完成")
 
     # ==================== Release 相关 ====================
@@ -515,23 +526,27 @@ class Database:
             return [dict(r) for r in cursor.fetchall()]
 
     # ==================== Active Monitor 相关 ====================
-    def add_active_monitor(self, release_id, release_no, added_by='system'):
+    def add_active_monitor(self, release_id, release_no, added_by='system',
+                           check_interval_seconds=None):
         now = get_current_time_str()
+        interval = check_interval_seconds or MONITOR_INTERVAL_SECONDS
         with self._get_conn() as conn:
             cursor = conn.cursor()
             try:
                 cursor.execute("""
                     INSERT INTO active_monitors (release_id, release_no, status,
-                        added_by, added_at, check_count)
-                    VALUES (?, ?, 'RUNNING', ?, ?, 0)
-                """, (release_id, release_no, added_by, now))
-                log.info(f"添加活跃监控: {release_no}, release_id={release_id}")
+                        added_by, added_at, check_count, check_interval_seconds)
+                    VALUES (?, ?, 'RUNNING', ?, ?, 0, ?)
+                """, (release_id, release_no, added_by, now, interval))
+                log.info(f"添加活跃监控: {release_no}, release_id={release_id}, "
+                         f"间隔={interval}s")
                 return True
             except sqlite3.IntegrityError:
                 cursor.execute("""
-                    UPDATE active_monitors SET status = 'RUNNING', added_by = ?, added_at = ?
+                    UPDATE active_monitors SET status = 'RUNNING', added_by = ?,
+                        added_at = ?, check_interval_seconds = ?
                     WHERE release_id = ?
-                """, (added_by, now, release_id))
+                """, (added_by, now, interval, release_id))
                 log.info(f"活跃监控已存在，重置为运行: {release_no}")
                 return True
 
@@ -572,8 +587,13 @@ class Database:
     def update_monitor_check(self, release_id):
         from datetime import datetime, timedelta
         now = get_current_time_str()
-        next_check = (datetime.now() + timedelta(seconds=MONITOR_INTERVAL_SECONDS)).strftime('%Y-%m-%d %H:%M:%S')
         with self._get_conn() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT check_interval_seconds FROM active_monitors WHERE release_id = ?",
+                           (release_id,))
+            row = cursor.fetchone()
+            interval = row[0] if row and row[0] else MONITOR_INTERVAL_SECONDS
+            next_check = (datetime.now() + timedelta(seconds=interval)).strftime('%Y-%m-%d %H:%M:%S')
             conn.execute("""
                 UPDATE active_monitors SET last_check_at = ?, next_check_at = ?,
                     check_count = check_count + 1

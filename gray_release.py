@@ -42,6 +42,13 @@ class GrayReleaseEngine:
 
         db.create_gray_records(release_id, release_no, warehouse_list)
 
+        groups = {}
+        for wh in warehouse_list:
+            g = wh['gray_group']
+            if g not in groups:
+                groups[g] = []
+            groups[g].append(wh)
+
         if not gray_required:
             for gr in db.get_gray_records(release_id):
                 db.update_gray_status(
