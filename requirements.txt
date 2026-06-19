@@ -1,0 +1,19 @@
+# 智能仓储 WMS 系统 - 上线发布与异常回滚自动化管理系统
+# 核心依赖
+
+# 基础：Python 3.8+ 自带，无需额外安装
+# - sqlite3
+# - csv
+# - json
+# - threading
+# - logging
+# - argparse
+
+# Excel 导出（可选，有则启用 xlsx 功能）
+openpyxl>=3.0.0
+
+# PDF 导出（可选，有则启用 pdf 功能）
+reportlab>=3.6.0
+
+# 图表增强（可选）
+# matplotlib>=3.5.0

@@ -1,0 +1,98 @@
+{
+  "report_title": "WMS 系统发布周度统计报告",
+  "week_range": "2026-06-15 ~ 2026-06-22",
+  "generated_at": "2026-06-19 09:34:07",
+  "summary": {
+    "total_releases": 2,
+    "success_count": 0,
+    "rollback_count": 0,
+    "rejected_count": 0,
+    "precheck_failed_count": 1,
+    "normal_count": 2,
+    "emergency_count": 0,
+    "success_rate": 0.0,
+    "rollback_rate": 0.0
+  },
+  "status_breakdown": {
+    "PRECHECK_FAILED": 1,
+    "ROLLBACK_FAILED": 1
+  },
+  "daily_trend": [
+    {
+      "day": "2026-06-19",
+      "cnt": 2
+    }
+  ],
+  "releases": [
+    {
+      "id": 2,
+      "release_no": "REL-20260619_093038",
+      "version": "v2.0619.38",
+      "risk_level": "normal",
+      "title": "WMS 库存管理模块优化",
+      "description": "优化库位分配算法，提升出库效率",
+      "changelog": "1. 优化库位推荐算法\n2. 修复入库验收Bug\n3. 提升AGV调度性能",
+      "submitter": "developer01",
+      "status": "ROLLBACK_FAILED",
+      "precheck_result": "{'passed': True, 'items': [{'item': 'inbound_acceptance_rate', 'name': '入库验收通过率', 'value': 0.98, 'threshold': 0.95, 'passed': True, 'details': '最近7天入库单验收通过比例, 实际值=98.00%, 阈值=95.00%'}, {'item': 'location_algorithm_valid_rate', 'name': '库位算法校验通过率', 'value': 0.99, 'threshold': 0.98, 'passed': True, 'details': '库位分配、推荐算法准确率, 实际值=99.00%, 阈值=98.00%'}, {'item': 'inventory_consistency_rate', 'name': '库存一致性', 'value': 1.0, 'threshold': 0.99, 'passed': True, 'details': '系统库存与实物库存盘点一致率, 实际值=100.00%, 阈值=99.00%'}, {'item': 'device_health_rate', 'name': '设备对接健康度', 'value': 0.98, 'threshold': 0.97, 'passed': True, 'details': 'AGV、PDA、RFID、分拣机等设备在线率, 实际值=98.00%, 阈值=97.00%'}], 'summary': {'total': 4, 'passed_count': 4, 'failed_count': 0}, 'checked_at': '2026-06-19 09:30:39'}",
+      "precheck_passed": 1,
+      "rollback_version": "v2.05.12.stable",
+      "created_at": "2026-06-19 09:30:38",
+      "updated_at": "2026-06-19 09:30:47",
+      "finished_at": "2026-06-19 09:30:47"
+    },
+    {
+      "id": 1,
+      "release_no": "REL-20260619_092918",
+      "version": "v2.0619.50",
+      "risk_level": "normal",
+      "title": "WMS 库存管理模块优化",
+      "description": "优化库位分配算法，提升出库效率",
+      "changelog": "1. 优化库位推荐算法\n2. 修复入库验收Bug\n3. 提升AGV调度性能",
+      "submitter": "developer01",
+      "status": "PRECHECK_FAILED",
+      "precheck_result": "{'passed': False, 'items': [{'item': 'inbound_acceptance_rate', 'name': '入库验收通过率', 'value': 0.9336, 'threshold': 0.95, 'passed': False, 'details': '最近7天入库单验收通过比例, 实际值=93.36%, 阈值=95.00%'}, {'item': 'location_algorithm_valid_rate', 'name': '库位算法校验通过率', 'value': 0.9961, 'threshold': 0.98, 'passed': True, 'details': '库位分配、推荐算法准确率, 实际值=99.61%, 阈值=98.00%'}, {'item': 'inventory_consistency_rate', 'name': '库存一致性', 'value': 0.9772, 'threshold': 0.99, 'passed': False, 'details': '系统库存与实物库存盘点一致率, 实际值=97.72%, 阈值=99.00%'}, {'item': 'device_health_rate', 'name': '设备对接健康度', 'value': 0.964, 'threshold': 0.97, 'passed': False, 'details': 'AGV、PDA、RFID、分拣机等设备在线率, 实际值=96.40%, 阈值=97.00%'}], 'summary': {'total': 4, 'passed_count': 1, 'failed_count': 3}, 'checked_at': '2026-06-19 09:29:19'}",
+      "precheck_passed": 0,
+      "rollback_version": "v2.05.12.stable",
+      "created_at": "2026-06-19 09:29:18",
+      "updated_at": "2026-06-19 09:29:19",
+      "finished_at": "2026-06-19 09:29:19"
+    }
+  ],
+  "rollbacks": [
+    {
+      "id": 1,
+      "release_id": 2,
+      "release_no": "REL-20260619_093038",
+      "trigger_type": "auto",
+      "trigger_reason": "监控指标异常",
+      "rollback_version": "v2.05.12.stable",
+      "affected_warehouses": "[\"华东中心仓\", \"华南中心仓\", \"华北中心仓\", \"西南区域仓\", \"华中区域仓\", \"东北区域仓\", \"西北区域仓\", \"海外保税仓\"]",
+      "affected_orders": 727,
+      "root_cause": "上架错误率异常: 上架错误率 2.21% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 5.75% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.87% 超过阈值 0.50%\n上架错误率异常: 上架错误率 4.47% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 5.72% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.83% 超过阈值 0.50%\n上架错误率异常: 上架错误率 4.12% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 3.64% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.63% 超过阈值 0.50%\n上架错误率异常: 上架错误率 4.65% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 5.74% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.51% 超过阈值 0.50%\n上架错误率异常: 上架错误率 2.44% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 5.21% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.71% 超过阈值 0.50%\n上架错误率异常: 上架错误率 2.58% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 3.59% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.90% 超过阈值 0.50%\n上架错误率异常: 上架错误率 2.52% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 5.10% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.68% 超过阈值 0.50%\n上架错误率异常: 上架错误率 3.28% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 3.63% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.65% 超过阈值 0.50%",
+      "status": "ROLLBACK_FAILED",
+      "report_path": "E:\\work\\d012\\reports\\rollback_report_REL-20260619_093038_20260619_093044.json",
+      "operator": "system",
+      "started_at": "2026-06-19 09:30:44",
+      "finished_at": "2026-06-19 09:30:47"
+    }
+  ],
+  "drills": [
+    {
+      "id": 1,
+      "drill_no": "DRILL-20260619_093047",
+      "title": "回滚演练-2026-06-19 09:30:47",
+      "plan": "{\"drill_objective\": \"验证回滚流程的有效性与时效性\", \"preparation\": [\"确认稳定版本可用\", \"确认仓库列表与优先级\", \"通知相关干系人\", \"准备回滚报告模板\"], \"steps\": [{\"step\": 1, \"action\": \"模拟监控异常告警\", \"duration\": \"1分钟\"}, {\"step\": 2, \"action\": \"触发自动回滚流程\", \"duration\": \"2分钟\"}, {\"step\": 3, \"action\": \"逐仓库执行版本回滚\", \"duration\": \"5分钟\"}, {\"step\": 4, \"action\": \"验证回滚后系统稳定性\", \"duration\": \"3分钟\"}, {\"step\": 5, \"action\": \"生成演练报告与改进点\", \"duration\": \"2分钟\"}], \"target_warehouses\": [\"WH001\", \"WH002\"], \"rollback_version\": \"stable_last\", \"expected_duration\": \"13分钟\", \"success_criteria\": [\"所有仓库成功回滚到稳定版本\", \"回滚总耗时 < 10分钟\", \"回滚后监控指标全部正常\", \"演练报告完整生成\"]}",
+      "target_release_no": "REL-20260619_093038",
+      "target_warehouses": "[\"WH001\", \"WH002\"]",
+      "status": "FINISHED",
+      "execution_log": "[2026-06-19 09:30:47] 演练开始\n[2026-06-19 09:30:47] 步骤1: 模拟监控异常告警 -> 成功\n[2026-06-19 09:30:47] 步骤2: 触发自动回滚流程 -> 成功\n[2026-06-19 09:30:47] 步骤3: 逐仓库执行版本回滚 -> 成功\n[2026-06-19 09:30:47] 步骤4: 验证回滚后系统稳定性 -> 成功\n[2026-06-19 09:30:48] 步骤5: 生成演练报告与改进点 -> 成功",
+      "report_path": "E:\\work\\d012\\reports\\drill_report_DRILL-20260619_093047_20260619_093048.txt",
+      "operator": "demo_user",
+      "result": "SUCCESS",
+      "created_at": "2026-06-19 09:30:47",
+      "started_at": "2026-06-19 09:30:47",
+      "finished_at": "2026-06-19 09:30:48"
+    }
+  ]
+}
