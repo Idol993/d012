@@ -697,29 +697,55 @@ class WeeklyReportScheduler:
         try:
             engine = ReportEngine()
             result = engine.generate_weekly_report()
-            paths = result.get('paths', {})
+            files = result.get('files', {})
             self._set_last_run_date(today_str)
-            log.info(f"[周报告调度器] 周报告生成成功: {paths}")
+
+            log.info(f"[周报告调度器] 周报告生成成功, 共 {len(files)} 个文件:")
+            for fmt, path in sorted(files.items()):
+                log.info(f"[周报告调度器]   [{fmt.upper()}] {path}")
+
             log.audit("自动生成周报告", "system", "weekly_report",
                       details={
                           "date": today_str,
-                          "paths": paths,
+                          "files": files,
+                          "file_count": len(files),
                           "generated_at": get_current_time_str(),
+                          "status": "success",
                       })
         except Exception as e:
-            log.error(f"[周报告调度器] 生成周报告失败: {e}", exc_info=True)
+            import traceback
+            err_detail = traceback.format_exc()
+            log.error(f"[周报告调度器] 生成周报告失败: {str(e)}")
+            log.error(f"[周报告调度器] 失败详情:\n{err_detail}")
             log.audit("自动生成周报告失败", "system", "weekly_report",
-                      details={"date": today_str, "error": str(e)})
+                      details={
+                          "date": today_str,
+                          "error": str(e),
+                          "traceback": err_detail,
+                          "status": "failed",
+                      })
 
     def run_now(self):
         log.info("[周报告调度器] 手动触发周报告生成")
         engine = ReportEngine()
         result = engine.generate_weekly_report()
-        paths = result.get('paths', {})
+        files = result.get('files', {})
         today_str = datetime.now().strftime('%Y-%m-%d')
         self._set_last_run_date(today_str)
+
+        log.info(f"[周报告调度器] 手动生成成功, 共 {len(files)} 个文件:")
+        for fmt, path in sorted(files.items()):
+            log.info(f"[周报告调度器]   [{fmt.upper()}] {path}")
+
         log.audit("手动触发生成周报告", "system", "weekly_report",
-                  details={"date": today_str, "paths": paths})
+                  details={
+                      "date": today_str,
+                      "files": files,
+                      "file_count": len(files),
+                      "generated_at": get_current_time_str(),
+                      "status": "success",
+                      "trigger": "manual",
+                  })
         return result
 
 

@@ -273,7 +273,8 @@ class RollbackEngine:
         gray_records = db.get_gray_records(release_id)
         all_deployed = [
             WAREHOUSES.get(r['warehouse_id'], {}).get('name', r['warehouse_id'])
-            for r in gray_records if r['status'] in ('DEPLOYED', 'VERIFIED', 'FAILED')
+            for r in gray_records
+            if r['status'] in ('DEPLOYED', 'VERIFIED', 'FAILED', 'FULL_DEPLOYED')
         ]
 
         report_data = {

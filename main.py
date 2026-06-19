@@ -282,8 +282,14 @@ def cmd_check_monitor(args):
     print(f"\n{'='*60}")
     print(f"  监控检查结果: {release['release_no']}")
     print(f"{'='*60}")
+
+    if not result.get('all_metrics'):
+        print(f"  {result.get('message', '暂无已部署仓库或检查数据')}")
+        print(f"{'='*60}")
+        return
+
     for m in result.get('all_metrics', []):
-        icon = "✗" if m['is_abnormal'] else "✓"
+        icon = "[异常]" if m['is_abnormal'] else "[正常]"
         print(f"  {icon} {m['warehouse_id']}({m['warehouse_name']}):")
         print(f"      上架错误率: {m['putaway_error_rate']:.2%} "
               f"{'[超阈值]' if m['putaway_error_rate'] > MONITOR_THRESHOLDS['putaway_error_rate'] else ''}")
@@ -293,14 +299,14 @@ def cmd_check_monitor(args):
               f"{'[超阈值]' if m['inventory_diff_rate'] > MONITOR_THRESHOLDS['inventory_diff_rate'] else ''}")
         print(f"      总订单数:   {m['total_orders']}, 异常订单: {m['abnormal_orders']}")
     print(f"{'-'*60}")
-    print(f"  异常仓库数: {result['abnormal_count']}/{result['checked_count']}")
+    print(f"  异常仓库数: {result.get('abnormal_count', 0)}/{result.get('checked_count', 0)}")
     print(f"  异常订单数: {result.get('total_abnormal_orders', 0)}")
-    print(f"  总体状态:   {'异常' if result['is_abnormal'] else '正常'}")
+    print(f"  总体状态:   {'异常' if result.get('is_abnormal') else '正常'}")
 
     if result.get('rollback_triggered'):
         rb = result.get('rollback_result', {})
         print(f"{'-'*60}")
-        print(f"  ★ 已自动触发回滚!")
+        print(f"  [自动回滚] 已触发!")
         print(f"    回滚结果: {'成功' if rb.get('success') else '失败'}")
         print(f"    回滚版本: {rb.get('rollback_version', '')}")
         print(f"    影响仓库: {', '.join(rb.get('affected_warehouses', []))}")
@@ -667,9 +673,44 @@ def cmd_detail(args):
     if rollbacks:
         print(f"  回滚记录:")
         for rb in rollbacks:
-            print(f"    [{rb['trigger_type']}] {rb['status']} - 影响订单 {rb.get('affected_orders', 0)}")
+            rb_status = RELEASE_STATUS.get(rb['status'], rb['status'])
+            print(f"    [{rb['trigger_type']}] {rb_status} - {rb.get('created_at', '')}")
+
+            affected_wh_str = rb.get('affected_warehouses', '')
+            if affected_wh_str:
+                try:
+                    wh_list = json.loads(affected_wh_str) if isinstance(affected_wh_str, str) else (affected_wh_str or [])
+                except:
+                    wh_list = [affected_wh_str] if affected_wh_str else []
+            else:
+                wh_list = []
+
+            if wh_list:
+                print(f"       影响仓库数: {len(wh_list)}")
+                print(f"       影响仓库:   {', '.join(wh_list)}")
+            else:
+                print(f"       影响仓库数: 0")
+
+            if rb.get('affected_orders', 0) > 0:
+                print(f"       影响订单:   {rb.get('affected_orders', 0)}")
             if rb.get('root_cause'):
-                print(f"       根因: {rb['root_cause']}")
+                print(f"       根因分析:   {rb['root_cause']}")
+            if rb.get('report_path'):
+                print(f"       报告路径:   {rb['report_path']}")
+
+            post_check = rb.get('post_rollback_check', '')
+            if post_check:
+                try:
+                    pc = json.loads(post_check) if isinstance(post_check, str) else {}
+                except:
+                    pc = {}
+                if pc:
+                    pc_status = pc.get('status', 'unknown')
+                    need_human = pc.get('need_manual_intervention', False)
+                    flag = " [需要人工介入]" if need_human else ""
+                    print(f"       回滚后复查: {pc_status}{flag}")
+                    if pc.get('abnormal_warehouses', 0) > 0:
+                        print(f"                   复查异常仓库: {pc.get('abnormal_warehouses', 0)}/{pc.get('checked_warehouses', 0)}")
     print(f"{'='*60}")
 
 
@@ -830,12 +871,22 @@ def build_parser():
 
     p_monitor.set_defaults(func=cmd_monitor_dispatch)
 
-    p_rollback = subparsers.add_parser('rollback', help='手动回滚')
-    p_rollback.add_argument('--release-id', type=int, required=True, help='发布单ID')
-    p_rollback.add_argument('--reason', help='回滚原因')
-    p_rollback.add_argument('--operator', default='manual', help='操作人')
-    p_rollback.add_argument('--yes', action='store_true', help='自动确认')
-    p_rollback.set_defaults(func=cmd_rollback)
+    p_rollback = subparsers.add_parser('rollback', help='回滚相关')
+    p_rollback.add_argument('--release-id', type=int, help='发布单ID(兼容老写法)')
+    p_rollback.add_argument('--reason', help='回滚原因(兼容老写法)')
+    p_rollback.add_argument('--operator', default='manual', help='操作人(兼容老写法)')
+    p_rollback.add_argument('--yes', action='store_true', help='自动确认(兼容老写法)')
+    rollback_sub = p_rollback.add_subparsers(dest='rollback_subcommand', required=False)
+
+    p_rs = rollback_sub.add_parser('summary', help='回滚汇总')
+    p_rs.add_argument('--release-id', type=int, help='按发布单ID过滤')
+    p_rs.add_argument('--release-no', help='按发布单号过滤')
+    p_rs.add_argument('--start-time', help='开始时间 YYYY-MM-DD')
+    p_rs.add_argument('--end-time', help='结束时间 YYYY-MM-DD')
+    p_rs.add_argument('--format', choices=['json', 'txt'], help='导出格式')
+    p_rs.set_defaults(func=cmd_rollback_summary)
+
+    p_rollback.set_defaults(func=cmd_rollback_dispatch)
 
     p_drill = subparsers.add_parser('drill', help='回滚演练')
     drill_sub = p_drill.add_subparsers(dest='drill_subcommand')

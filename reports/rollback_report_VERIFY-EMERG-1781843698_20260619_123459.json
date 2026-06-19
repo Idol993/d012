@@ -1,0 +1,385 @@
+{
+  "report_title": "WMS 系统发布回滚报告",
+  "report_no": "RB-20260619_123459",
+  "generated_at": "2026-06-19 12:34:59",
+  "release_info": {
+    "release_no": "VERIFY-EMERG-1781843698",
+    "version": "v7.7.7",
+    "risk_level": "emergency",
+    "title": "验证紧急发布"
+  },
+  "rollback_info": {
+    "rollback_id": 11,
+    "trigger_type": "auto",
+    "trigger_reason": "监控指标异常: 8 个仓库超标",
+    "rollback_version": "v1.0.0",
+    "started_at": "2026-06-19 12:34:59"
+  },
+  "impact_assessment": {
+    "affected_warehouses": [
+      {
+        "id": "WH001",
+        "name": "华东中心仓",
+        "abnormal_orders": 22,
+        "metrics": {
+          "putaway_error_rate": 0.022,
+          "outbound_delay_rate": 0.0311,
+          "inventory_diff_rate": 0.0078
+        }
+      },
+      {
+        "id": "WH002",
+        "name": "华南中心仓",
+        "abnormal_orders": 72,
+        "metrics": {
+          "putaway_error_rate": 0.0208,
+          "outbound_delay_rate": 0.0321,
+          "inventory_diff_rate": 0.0061
+        }
+      },
+      {
+        "id": "WH003",
+        "name": "华北中心仓",
+        "abnormal_orders": 36,
+        "metrics": {
+          "putaway_error_rate": 0.0333,
+          "outbound_delay_rate": 0.0552,
+          "inventory_diff_rate": 0.0057
+        }
+      },
+      {
+        "id": "WH004",
+        "name": "西南区域仓",
+        "abnormal_orders": 33,
+        "metrics": {
+          "putaway_error_rate": 0.0491,
+          "outbound_delay_rate": 0.048,
+          "inventory_diff_rate": 0.0063
+        }
+      },
+      {
+        "id": "WH005",
+        "name": "华中区域仓",
+        "abnormal_orders": 38,
+        "metrics": {
+          "putaway_error_rate": 0.0274,
+          "outbound_delay_rate": 0.0594,
+          "inventory_diff_rate": 0.0088
+        }
+      },
+      {
+        "id": "WH006",
+        "name": "东北区域仓",
+        "abnormal_orders": 32,
+        "metrics": {
+          "putaway_error_rate": 0.0427,
+          "outbound_delay_rate": 0.0438,
+          "inventory_diff_rate": 0.008
+        }
+      },
+      {
+        "id": "WH007",
+        "name": "西北区域仓",
+        "abnormal_orders": 132,
+        "metrics": {
+          "putaway_error_rate": 0.0357,
+          "outbound_delay_rate": 0.0542,
+          "inventory_diff_rate": 0.0076
+        }
+      },
+      {
+        "id": "WH008",
+        "name": "海外保税仓",
+        "abnormal_orders": 90,
+        "metrics": {
+          "putaway_error_rate": 0.0326,
+          "outbound_delay_rate": 0.0449,
+          "inventory_diff_rate": 0.0097
+        }
+      }
+    ],
+    "affected_warehouse_names": [
+      "华东中心仓",
+      "华南中心仓",
+      "华北中心仓",
+      "西南区域仓",
+      "华中区域仓",
+      "东北区域仓",
+      "西北区域仓",
+      "海外保税仓"
+    ],
+    "affected_warehouse_count": 8,
+    "affected_orders": 455
+  },
+  "root_cause_analysis": "上架错误率异常: 上架错误率 2.20% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 3.11% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.78% 超过阈值 0.50%\n上架错误率异常: 上架错误率 2.08% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 3.21% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.61% 超过阈值 0.50%\n上架错误率异常: 上架错误率 3.33% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 5.52% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.57% 超过阈值 0.50%\n上架错误率异常: 上架错误率 4.91% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 4.80% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.63% 超过阈值 0.50%\n上架错误率异常: 上架错误率 2.74% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 5.94% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.88% 超过阈值 0.50%\n上架错误率异常: 上架错误率 4.27% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 4.38% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.80% 超过阈值 0.50%\n上架错误率异常: 上架错误率 3.57% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 5.42% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.76% 超过阈值 0.50%\n上架错误率异常: 上架错误率 3.26% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 4.49% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.97% 超过阈值 0.50%",
+  "monitor_details": {
+    "success": true,
+    "release_id": 14,
+    "release_no": "VERIFY-EMERG-1781843698",
+    "checked_count": 8,
+    "abnormal_count": 8,
+    "is_abnormal": true,
+    "total_abnormal_orders": 455,
+    "abnormal_warehouses": [
+      {
+        "warehouse_id": "WH001",
+        "warehouse_name": "华东中心仓",
+        "putaway_error_rate": 0.022,
+        "outbound_delay_rate": 0.0311,
+        "inventory_diff_rate": 0.0078,
+        "total_orders": 1092,
+        "abnormal_orders": 22,
+        "is_abnormal": true,
+        "alert_details": {
+          "putaway_error": "上架错误率 2.20% 超过阈值 2.00%",
+          "outbound_delay": "出库延迟率 3.11% 超过阈值 3.00%",
+          "inventory_diff": "库存差异率 0.78% 超过阈值 0.50%"
+        },
+        "status": "abnormal"
+      },
+      {
+        "warehouse_id": "WH002",
+        "warehouse_name": "华南中心仓",
+        "putaway_error_rate": 0.0208,
+        "outbound_delay_rate": 0.0321,
+        "inventory_diff_rate": 0.0061,
+        "total_orders": 3689,
+        "abnormal_orders": 72,
+        "is_abnormal": true,
+        "alert_details": {
+          "putaway_error": "上架错误率 2.08% 超过阈值 2.00%",
+          "outbound_delay": "出库延迟率 3.21% 超过阈值 3.00%",
+          "inventory_diff": "库存差异率 0.61% 超过阈值 0.50%"
+        },
+        "status": "abnormal"
+      },
+      {
+        "warehouse_id": "WH003",
+        "warehouse_name": "华北中心仓",
+        "putaway_error_rate": 0.0333,
+        "outbound_delay_rate": 0.0552,
+        "inventory_diff_rate": 0.0057,
+        "total_orders": 1150,
+        "abnormal_orders": 36,
+        "is_abnormal": true,
+        "alert_details": {
+          "putaway_error": "上架错误率 3.33% 超过阈值 2.00%",
+          "outbound_delay": "出库延迟率 5.52% 超过阈值 3.00%",
+          "inventory_diff": "库存差异率 0.57% 超过阈值 0.50%"
+        },
+        "status": "abnormal"
+      },
+      {
+        "warehouse_id": "WH004",
+        "warehouse_name": "西南区域仓",
+        "putaway_error_rate": 0.0491,
+        "outbound_delay_rate": 0.048,
+        "inventory_diff_rate": 0.0063,
+        "total_orders": 980,
+        "abnormal_orders": 33,
+        "is_abnormal": true,
+        "alert_details": {
+          "putaway_error": "上架错误率 4.91% 超过阈值 2.00%",
+          "outbound_delay": "出库延迟率 4.80% 超过阈值 3.00%",
+          "inventory_diff": "库存差异率 0.63% 超过阈值 0.50%"
+        },
+        "status": "abnormal"
+      },
+      {
+        "warehouse_id": "WH005",
+        "warehouse_name": "华中区域仓",
+        "putaway_error_rate": 0.0274,
+        "outbound_delay_rate": 0.0594,
+        "inventory_diff_rate": 0.0088,
+        "total_orders": 1215,
+        "abnormal_orders": 38,
+        "is_abnormal": true,
+        "alert_details": {
+          "putaway_error": "上架错误率 2.74% 超过阈值 2.00%",
+          "outbound_delay": "出库延迟率 5.94% 超过阈值 3.00%",
+          "inventory_diff": "库存差异率 0.88% 超过阈值 0.50%"
+        },
+        "status": "abnormal"
+      },
+      {
+        "warehouse_id": "WH006",
+        "warehouse_name": "东北区域仓",
+        "putaway_error_rate": 0.0427,
+        "outbound_delay_rate": 0.0438,
+        "inventory_diff_rate": 0.008,
+        "total_orders": 1018,
+        "abnormal_orders": 32,
+        "is_abnormal": true,
+        "alert_details": {
+          "putaway_error": "上架错误率 4.27% 超过阈值 2.00%",
+          "outbound_delay": "出库延迟率 4.38% 超过阈值 3.00%",
+          "inventory_diff": "库存差异率 0.80% 超过阈值 0.50%"
+        },
+        "status": "abnormal"
+      },
+      {
+        "warehouse_id": "WH007",
+        "warehouse_name": "西北区域仓",
+        "putaway_error_rate": 0.0357,
+        "outbound_delay_rate": 0.0542,
+        "inventory_diff_rate": 0.0076,
+        "total_orders": 4061,
+        "abnormal_orders": 132,
+        "is_abnormal": true,
+        "alert_details": {
+          "putaway_error": "上架错误率 3.57% 超过阈值 2.00%",
+          "outbound_delay": "出库延迟率 5.42% 超过阈值 3.00%",
+          "inventory_diff": "库存差异率 0.76% 超过阈值 0.50%"
+        },
+        "status": "abnormal"
+      },
+      {
+        "warehouse_id": "WH008",
+        "warehouse_name": "海外保税仓",
+        "putaway_error_rate": 0.0326,
+        "outbound_delay_rate": 0.0449,
+        "inventory_diff_rate": 0.0097,
+        "total_orders": 3096,
+        "abnormal_orders": 90,
+        "is_abnormal": true,
+        "alert_details": {
+          "putaway_error": "上架错误率 3.26% 超过阈值 2.00%",
+          "outbound_delay": "出库延迟率 4.49% 超过阈值 3.00%",
+          "inventory_diff": "库存差异率 0.97% 超过阈值 0.50%"
+        },
+        "status": "abnormal"
+      }
+    ],
+    "all_metrics": [
+      {
+        "warehouse_id": "WH001",
+        "warehouse_name": "华东中心仓",
+        "putaway_error_rate": 0.022,
+        "outbound_delay_rate": 0.0311,
+        "inventory_diff_rate": 0.0078,
+        "total_orders": 1092,
+        "abnormal_orders": 22,
+        "is_abnormal": true,
+        "alert_details": {
+          "putaway_error": "上架错误率 2.20% 超过阈值 2.00%",
+          "outbound_delay": "出库延迟率 3.11% 超过阈值 3.00%",
+          "inventory_diff": "库存差异率 0.78% 超过阈值 0.50%"
+        },
+        "status": "abnormal"
+      },
+      {
+        "warehouse_id": "WH002",
+        "warehouse_name": "华南中心仓",
+        "putaway_error_rate": 0.0208,
+        "outbound_delay_rate": 0.0321,
+        "inventory_diff_rate": 0.0061,
+        "total_orders": 3689,
+        "abnormal_orders": 72,
+        "is_abnormal": true,
+        "alert_details": {
+          "putaway_error": "上架错误率 2.08% 超过阈值 2.00%",
+          "outbound_delay": "出库延迟率 3.21% 超过阈值 3.00%",
+          "inventory_diff": "库存差异率 0.61% 超过阈值 0.50%"
+        },
+        "status": "abnormal"
+      },
+      {
+        "warehouse_id": "WH003",
+        "warehouse_name": "华北中心仓",
+        "putaway_error_rate": 0.0333,
+        "outbound_delay_rate": 0.0552,
+        "inventory_diff_rate": 0.0057,
+        "total_orders": 1150,
+        "abnormal_orders": 36,
+        "is_abnormal": true,
+        "alert_details": {
+          "putaway_error": "上架错误率 3.33% 超过阈值 2.00%",
+          "outbound_delay": "出库延迟率 5.52% 超过阈值 3.00%",
+          "inventory_diff": "库存差异率 0.57% 超过阈值 0.50%"
+        },
+        "status": "abnormal"
+      },
+      {
+        "warehouse_id": "WH004",
+        "warehouse_name": "西南区域仓",
+        "putaway_error_rate": 0.0491,
+        "outbound_delay_rate": 0.048,
+        "inventory_diff_rate": 0.0063,
+        "total_orders": 980,
+        "abnormal_orders": 33,
+        "is_abnormal": true,
+        "alert_details": {
+          "putaway_error": "上架错误率 4.91% 超过阈值 2.00%",
+          "outbound_delay": "出库延迟率 4.80% 超过阈值 3.00%",
+          "inventory_diff": "库存差异率 0.63% 超过阈值 0.50%"
+        },
+        "status": "abnormal"
+      },
+      {
+        "warehouse_id": "WH005",
+        "warehouse_name": "华中区域仓",
+        "putaway_error_rate": 0.0274,
+        "outbound_delay_rate": 0.0594,
+        "inventory_diff_rate": 0.0088,
+        "total_orders": 1215,
+        "abnormal_orders": 38,
+        "is_abnormal": true,
+        "alert_details": {
+          "putaway_error": "上架错误率 2.74% 超过阈值 2.00%",
+          "outbound_delay": "出库延迟率 5.94% 超过阈值 3.00%",
+          "inventory_diff": "库存差异率 0.88% 超过阈值 0.50%"
+        },
+        "status": "abnormal"
+      },
+      {
+        "warehouse_id": "WH006",
+        "warehouse_name": "东北区域仓",
+        "putaway_error_rate": 0.0427,
+        "outbound_delay_rate": 0.0438,
+        "inventory_diff_rate": 0.008,
+        "total_orders": 1018,
+        "abnormal_orders": 32,
+        "is_abnormal": true,
+        "alert_details": {
+          "putaway_error": "上架错误率 4.27% 超过阈值 2.00%",
+          "outbound_delay": "出库延迟率 4.38% 超过阈值 3.00%",
+          "inventory_diff": "库存差异率 0.80% 超过阈值 0.50%"
+        },
+        "status": "abnormal"
+      },
+      {
+        "warehouse_id": "WH007",
+        "warehouse_name": "西北区域仓",
+        "putaway_error_rate": 0.0357,
+        "outbound_delay_rate": 0.0542,
+        "inventory_diff_rate": 0.0076,
+        "total_orders": 4061,
+        "abnormal_orders": 132,
+        "is_abnormal": true,
+        "alert_details": {
+          "putaway_error": "上架错误率 3.57% 超过阈值 2.00%",
+          "outbound_delay": "出库延迟率 5.42% 超过阈值 3.00%",
+          "inventory_diff": "库存差异率 0.76% 超过阈值 0.50%"
+        },
+        "status": "abnormal"
+      },
+      {
+        "warehouse_id": "WH008",
+        "warehouse_name": "海外保税仓",
+        "putaway_error_rate": 0.0326,
+        "outbound_delay_rate": 0.0449,
+        "inventory_diff_rate": 0.0097,
+        "total_orders": 3096,
+        "abnormal_orders": 90,
+        "is_abnormal": true,
+        "alert_details": {
+          "putaway_error": "上架错误率 3.26% 超过阈值 2.00%",
+          "outbound_delay": "出库延迟率 4.49% 超过阈值 3.00%",
+          "inventory_diff": "库存差异率 0.97% 超过阈值 0.50%"
+        },
+        "status": "abnormal"
+      }
+    ],
+    "checked_at": "2026-06-19 12:34:59"
+  }
+}
