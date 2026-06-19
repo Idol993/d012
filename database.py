@@ -10,7 +10,7 @@ import threading
 from datetime import datetime, timedelta
 from contextlib import contextmanager
 
-from config import DB_PATH, get_current_time_str
+from config import DB_PATH, get_current_time_str, MONITOR_INTERVAL_SECONDS
 from logger import log
 
 
@@ -512,6 +512,84 @@ class Database:
             cursor.execute(f"""
                 SELECT * FROM rollback_drills {where_sql} ORDER BY id DESC LIMIT ?
             """, params + [limit])
+            return [dict(r) for r in cursor.fetchall()]
+
+    # ==================== Active Monitor 相关 ====================
+    def add_active_monitor(self, release_id, release_no, added_by='system'):
+        now = get_current_time_str()
+        with self._get_conn() as conn:
+            cursor = conn.cursor()
+            try:
+                cursor.execute("""
+                    INSERT INTO active_monitors (release_id, release_no, status,
+                        added_by, added_at, check_count)
+                    VALUES (?, ?, 'RUNNING', ?, ?, 0)
+                """, (release_id, release_no, added_by, now))
+                log.info(f"添加活跃监控: {release_no}, release_id={release_id}")
+                return True
+            except sqlite3.IntegrityError:
+                cursor.execute("""
+                    UPDATE active_monitors SET status = 'RUNNING', added_by = ?, added_at = ?
+                    WHERE release_id = ?
+                """, (added_by, now, release_id))
+                log.info(f"活跃监控已存在，重置为运行: {release_no}")
+                return True
+
+    def remove_active_monitor(self, release_id):
+        with self._get_conn() as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM active_monitors WHERE release_id = ?", (release_id,))
+            log.info(f"移除活跃监控: release_id={release_id}")
+            return cursor.rowcount > 0
+
+    def list_active_monitors(self, status='RUNNING'):
+        with self._get_conn() as conn:
+            cursor = conn.cursor()
+            if status:
+                cursor.execute("""
+                    SELECT am.*, r.version, r.risk_level, r.status as release_status
+                    FROM active_monitors am
+                    LEFT JOIN releases r ON am.release_id = r.id
+                    WHERE am.status = ?
+                    ORDER BY am.id DESC
+                """, (status,))
+            else:
+                cursor.execute("""
+                    SELECT am.*, r.version, r.risk_level, r.status as release_status
+                    FROM active_monitors am
+                    LEFT JOIN releases r ON am.release_id = r.id
+                    ORDER BY am.id DESC
+                """)
+            return [dict(r) for r in cursor.fetchall()]
+
+    def get_active_monitor(self, release_id):
+        with self._get_conn() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM active_monitors WHERE release_id = ?", (release_id,))
+            row = cursor.fetchone()
+            return dict(row) if row else None
+
+    def update_monitor_check(self, release_id):
+        from datetime import datetime, timedelta
+        now = get_current_time_str()
+        next_check = (datetime.now() + timedelta(seconds=MONITOR_INTERVAL_SECONDS)).strftime('%Y-%m-%d %H:%M:%S')
+        with self._get_conn() as conn:
+            conn.execute("""
+                UPDATE active_monitors SET last_check_at = ?, next_check_at = ?,
+                    check_count = check_count + 1
+                WHERE release_id = ?
+            """, (now, next_check, release_id))
+
+    def get_monitors_to_check(self):
+        now = get_current_time_str()
+        with self._get_conn() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT * FROM active_monitors
+                WHERE status = 'RUNNING'
+                    AND (next_check_at IS NULL OR next_check_at <= ?)
+                ORDER BY id
+            """, (now,))
             return [dict(r) for r in cursor.fetchall()]
 
     # ==================== 统计查询 ====================

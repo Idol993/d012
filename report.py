@@ -382,6 +382,16 @@ class ReportEngine:
         log.info(f"导出查询: 类型={data_type}, 格式={export_format}, "
                  f"时间={start_time}~{end_time}, 仓库={warehouse_id}, 版本={version}")
 
+        release_ids = None
+        if data_type in ('rollbacks', 'monitors', 'approvals'):
+            if version or status or risk_level:
+                filter_releases = db.list_releases(
+                    status=status, risk_level=risk_level,
+                    start_time=start_time, end_time=end_time,
+                    version=version, limit=100000
+                )
+                release_ids = [r['id'] for r in filter_releases]
+
         if data_type == 'releases':
             records = db.list_releases(
                 status=status, risk_level=risk_level,
@@ -392,17 +402,41 @@ class ReportEngine:
             records = db.get_rollback_records(
                 start_time=start_time, end_time=end_time
             )
+            if release_ids is not None:
+                records = [r for r in records if r['release_id'] in release_ids]
+            if warehouse_id:
+                filtered = []
+                for r in records:
+                    affected = r.get('affected_warehouses') or ''
+                    if isinstance(affected, str):
+                        try:
+                            affected = json.loads(affected)
+                        except:
+                            affected = [affected]
+                    wh_name = WAREHOUSES.get(warehouse_id, {}).get('name', warehouse_id)
+                    if warehouse_id in affected or wh_name in affected:
+                        filtered.append(r)
+                records = filtered
         elif data_type == 'monitors':
             records = db.get_monitor_records(
                 warehouse_id=warehouse_id,
                 start_time=start_time, end_time=end_time,
                 limit=10000
             )
+            if release_ids is not None:
+                records = [r for r in records if r['release_id'] in release_ids]
         elif data_type == 'approvals':
-            records = []
-            releases = db.list_releases(limit=10000)
-            for r in releases:
-                records.extend(db.get_approvals(r['id']))
+            if release_ids is not None:
+                records = []
+                for rid in release_ids:
+                    records.extend(db.get_approvals(rid))
+            else:
+                releases = db.list_releases(
+                    start_time=start_time, end_time=end_time, limit=10000
+                )
+                records = []
+                for r in releases:
+                    records.extend(db.get_approvals(r['id']))
         else:
             records = []
 
@@ -466,3 +500,227 @@ class ReportEngine:
 
 
 report_engine = ReportEngine()
+
+
+class WeeklyReportScheduler:
+    """周报告定时调度器 - 后台常驻，周一自动生成周报告"""
+
+    def __init__(self):
+        self._running = False
+        self.pid_file = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            'data', 'weekly_report_scheduler.pid'
+        )
+        self.last_run_file = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            'data', 'weekly_report_last_run.txt'
+        )
+
+    def is_running(self) -> bool:
+        if not os.path.exists(self.pid_file):
+            return False
+        try:
+            with open(self.pid_file, 'r') as f:
+                pid = int(f.read().strip())
+            import ctypes
+            kernel32 = ctypes.windll.kernel32
+            process = kernel32.OpenProcess(1024, 0, pid)
+            if process:
+                kernel32.CloseHandle(process)
+                return True
+            return False
+        except Exception:
+            return False
+
+    def get_pid(self):
+        if os.path.exists(self.pid_file):
+            try:
+                with open(self.pid_file, 'r') as f:
+                    return int(f.read().strip())
+            except:
+                return None
+        return None
+
+    def _get_last_run_date(self):
+        if os.path.exists(self.last_run_file):
+            try:
+                with open(self.last_run_file, 'r') as f:
+                    return f.read().strip()
+            except:
+                return None
+        return None
+
+    def _set_last_run_date(self, date_str):
+        try:
+            with open(self.last_run_file, 'w') as f:
+                f.write(date_str)
+        except Exception as e:
+            log.warning(f"写入周报告上次运行记录失败: {e}")
+
+    def start(self) -> Dict:
+        if self.is_running():
+            return {'success': False, 'message': '周报告定时任务已在运行', 'pid': self.get_pid()}
+
+        import sys
+        import subprocess
+
+        script_path = os.path.abspath(__file__)
+        project_dir = os.path.dirname(script_path)
+        main_path = os.path.join(project_dir, 'main.py')
+
+        python_exe = sys.executable
+
+        if os.name == 'nt':
+            DETACHED_PROCESS = 0x00000008
+            CREATE_NEW_PROCESS_GROUP = 0x00000200
+            flags = DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP
+            subprocess.Popen(
+                [python_exe, main_path, 'report', 'scheduler', 'run'],
+                cwd=project_dir,
+                creationflags=flags,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+        else:
+            subprocess.Popen(
+                [python_exe, main_path, 'report', 'scheduler', 'run'],
+                cwd=project_dir,
+                start_new_session=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+
+        import time
+        for _ in range(10):
+            time.sleep(0.5)
+            if self.is_running():
+                break
+
+        pid = self.get_pid()
+        log.info(f"周报告定时任务已启动, PID={pid}")
+        log.audit("启动周报告定时任务", "system", "weekly_report_scheduler",
+                  details={"pid": pid})
+        return {'success': True, 'message': '周报告定时任务已启动', 'pid': pid}
+
+    def stop(self) -> Dict:
+        if not self.is_running():
+            return {'success': True, 'message': '周报告定时任务未在运行'}
+
+        pid = self.get_pid()
+        try:
+            if os.name == 'nt':
+                import ctypes
+                kernel32 = ctypes.windll.kernel32
+                process = kernel32.OpenProcess(1, 0, pid)
+                if process:
+                    kernel32.TerminateProcess(process, 0)
+                    kernel32.CloseHandle(process)
+            else:
+                import signal
+                os.kill(pid, signal.SIGTERM)
+        except Exception as e:
+            log.warning(f"停止周报告定时任务异常: {e}")
+
+        try:
+            if os.path.exists(self.pid_file):
+                os.remove(self.pid_file)
+        except:
+            pass
+
+        log.info(f"周报告定时任务已停止, PID={pid}")
+        log.audit("停止周报告定时任务", "system", "weekly_report_scheduler",
+                  details={"pid": pid})
+        return {'success': True, 'message': '周报告定时任务已停止', 'pid': pid}
+
+    def status(self) -> Dict:
+        running = self.is_running()
+        last_run = self._get_last_run_date()
+        return {
+            'running': running,
+            'pid': self.get_pid() if running else None,
+            'last_run_date': last_run,
+            'schedule': '每周一 09:00 自动生成周报告',
+        }
+
+    def run_loop(self):
+        pid = os.getpid()
+        with open(self.pid_file, 'w') as f:
+            f.write(str(pid))
+
+        log.info(f"[周报告调度器] 启动, PID={pid}")
+        log.audit("周报告定时任务启动", "system", "weekly_report_scheduler",
+                  details={"pid": pid})
+
+        self._running = True
+        import signal
+
+        def _handle_signal(signum, frame):
+            log.info(f"[周报告调度器] 收到信号 {signum}, 准备退出")
+            self._running = False
+
+        if os.name != 'nt':
+            signal.signal(signal.SIGTERM, _handle_signal)
+            signal.signal(signal.SIGINT, _handle_signal)
+
+        try:
+            while self._running:
+                try:
+                    self._tick()
+                except Exception as e:
+                    log.error(f"[周报告调度器] 循环异常: {str(e)}", exc_info=True)
+                import time
+                time.sleep(1800)
+        finally:
+            try:
+                if os.path.exists(self.pid_file):
+                    os.remove(self.pid_file)
+            except:
+                pass
+            log.info("[周报告调度器] 已退出")
+
+    def _tick(self):
+        now = datetime.now()
+        today_str = now.strftime('%Y-%m-%d')
+        last_run = self._get_last_run_date()
+
+        if now.weekday() != 0:
+            return
+
+        if now.hour < 9:
+            return
+
+        if last_run == today_str:
+            return
+
+        log.info(f"[周报告调度器] 到点生成周报告: {today_str}")
+
+        try:
+            engine = ReportEngine()
+            result = engine.generate_weekly_report()
+            paths = result.get('paths', {})
+            self._set_last_run_date(today_str)
+            log.info(f"[周报告调度器] 周报告生成成功: {paths}")
+            log.audit("自动生成周报告", "system", "weekly_report",
+                      details={
+                          "date": today_str,
+                          "paths": paths,
+                          "generated_at": get_current_time_str(),
+                      })
+        except Exception as e:
+            log.error(f"[周报告调度器] 生成周报告失败: {e}", exc_info=True)
+            log.audit("自动生成周报告失败", "system", "weekly_report",
+                      details={"date": today_str, "error": str(e)})
+
+    def run_now(self):
+        log.info("[周报告调度器] 手动触发周报告生成")
+        engine = ReportEngine()
+        result = engine.generate_weekly_report()
+        paths = result.get('paths', {})
+        today_str = datetime.now().strftime('%Y-%m-%d')
+        self._set_last_run_date(today_str)
+        log.audit("手动触发生成周报告", "system", "weekly_report",
+                  details={"date": today_str, "paths": paths})
+        return result
+
+
+weekly_scheduler = WeeklyReportScheduler()

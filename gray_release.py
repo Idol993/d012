@@ -19,7 +19,7 @@ class GrayReleaseEngine:
         pass
 
     def prepare_gray_plan(self, release_id: int, release_no: str,
-                          risk_level: str) -> Dict:
+                          risk_level: str, version: str = None) -> Dict:
         """
         根据风险级别准备灰度发布计划
         """
@@ -27,14 +27,6 @@ class GrayReleaseEngine:
             raise ValueError(f"未知风险级别: {risk_level}")
 
         gray_required = RISK_LEVELS[risk_level]['gray_required']
-
-        if not gray_required:
-            return {
-                'gray_required': False,
-                'groups': [],
-                'warehouses': [],
-                'message': '紧急发布，跳过灰度，直接全量发布',
-            }
 
         warehouse_list = []
         for wh_id, wh_info in WAREHOUSES.items():
@@ -48,14 +40,23 @@ class GrayReleaseEngine:
 
         warehouse_list.sort(key=lambda x: (x['gray_group'], x['priority']))
 
-        groups = {}
-        for wh in warehouse_list:
-            g = wh['gray_group']
-            if g not in groups:
-                groups[g] = []
-            groups[g].append(wh)
-
         db.create_gray_records(release_id, release_no, warehouse_list)
+
+        if not gray_required:
+            for gr in db.get_gray_records(release_id):
+                db.update_gray_status(
+                    gr['id'], 'FULL_DEPLOYED',
+                    deployed_at=get_current_time_str(),
+                    metrics={'deploy_type': 'emergency', 'version': version},
+                )
+            log.info(f"紧急发布 {release_no}，跳过灰度，全量部署到 {len(warehouse_list)} 个仓库")
+            return {
+                'gray_required': False,
+                'groups': [],
+                'warehouses': warehouse_list,
+                'total_warehouses': len(warehouse_list),
+                'message': '紧急发布，跳过灰度，直接全量发布',
+            }
 
         plan = {
             'gray_required': True,
@@ -185,7 +186,7 @@ class GrayReleaseEngine:
         if not release:
             return {'success': False, 'message': '发布单不存在'}
 
-        plan = self.prepare_gray_plan(release_id, release_no, release['risk_level'])
+        plan = self.prepare_gray_plan(release_id, release_no, release['risk_level'], version)
 
         if not plan['gray_required']:
             log.info(f"紧急发布 {release_no}，跳过灰度，直接全量发布")

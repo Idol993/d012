@@ -20,8 +20,8 @@ from database import db
 from pre_check import PreCheckEngine
 from approval import ApprovalEngine
 from gray_release import GrayReleaseEngine
-from monitor_rollback import monitor_engine, rollback_engine
-from report import report_engine
+from monitor_rollback import monitor_engine, rollback_engine, monitor_daemon
+from report import report_engine, weekly_scheduler
 
 
 precheck = PreCheckEngine()
@@ -215,36 +215,6 @@ def cmd_gray_release(args):
         cmd_start_monitor(argparse.Namespace(release_id=release_id))
 
 
-def cmd_start_monitor(args):
-    """启动监控"""
-    release_id = args.release_id
-    release = db.get_release(release_id=release_id)
-    if not release:
-        print("错误: 未找到对应发布单")
-        return
-
-    def on_abnormal(rid, rno, monitor_result):
-        release_now = db.get_release(release_id=rid)
-        if release_now and release_now['status'] in ('ROLLBACK_SUCCESS', 'ROLLBACK_FAILED'):
-            return True
-        log.warning(f"监控发现异常，触发自动回滚: {rno}")
-        rollback_engine.execute_rollback(
-            rid, rno, 'auto', '监控指标超过阈值', monitor_result
-        )
-        return True
-
-    print(f"\n启动监控: 发布单 {release['release_no']}")
-    print(f"监控阈值:")
-    print(f"  上架错误率阈值: {MONITOR_THRESHOLDS['putaway_error_rate']:.2%}")
-    print(f"  出库延迟率阈值: {MONITOR_THRESHOLDS['outbound_delay_rate']:.2%}")
-    print(f"  库存差异率阈值: {MONITOR_THRESHOLDS['inventory_diff_rate']:.2%}")
-
-    monitor_engine.start_background_monitor(
-        release_id, release['release_no'], on_abnormal
-    )
-    print(f"监控已启动，每5分钟检查一次，异常将自动触发回滚...")
-
-
 def cmd_check_monitor(args):
     """立即执行一次监控检查"""
     release_id = args.release_id
@@ -254,8 +224,12 @@ def cmd_check_monitor(args):
         return
 
     force_abnormal = getattr(args, 'force_abnormal', False)
+    auto_rollback = getattr(args, 'auto_rollback', False)
+
     result = monitor_engine.check_release(
-        release_id, release['release_no'], force_abnormal=force_abnormal
+        release_id, release['release_no'],
+        force_abnormal=force_abnormal,
+        auto_rollback=auto_rollback,
     )
 
     print(f"\n{'='*60}")
@@ -275,7 +249,117 @@ def cmd_check_monitor(args):
     print(f"  异常仓库数: {result['abnormal_count']}/{result['checked_count']}")
     print(f"  异常订单数: {result.get('total_abnormal_orders', 0)}")
     print(f"  总体状态:   {'异常' if result['is_abnormal'] else '正常'}")
+
+    if result.get('rollback_triggered'):
+        rb = result.get('rollback_result', {})
+        print(f"{'-'*60}")
+        print(f"  ★ 已自动触发回滚!")
+        print(f"    回滚结果: {'成功' if rb.get('success') else '失败'}")
+        print(f"    回滚版本: {rb.get('rollback_version', '')}")
+        print(f"    影响仓库: {', '.join(rb.get('affected_warehouses', []))}")
+        print(f"    影响订单: {rb.get('affected_orders', 0)} 单")
+        print(f"    报告路径: {rb.get('report_path', '')}")
     print(f"{'='*60}")
+
+
+def cmd_monitor_add(args):
+    """将发布单加入活跃监控队列"""
+    release_id = args.release_id
+    release = db.get_release(release_id=release_id)
+    if not release:
+        print("错误: 未找到对应发布单")
+        return
+
+    added_by = getattr(args, 'operator', 'cli')
+    db.add_active_monitor(release_id, release['release_no'], added_by=added_by)
+
+    print(f"\n✓ 发布单 {release['release_no']} 已加入活跃监控队列")
+    print(f"  请确保监控守护进程已运行: python main.py monitor daemon status")
+    print(f"  守护进程将每5分钟自动检查一次，异常自动触发回滚")
+
+
+def cmd_monitor_remove(args):
+    """从活跃监控队列移除"""
+    release_id = args.release_id
+    release = db.get_release(release_id=release_id)
+    if not release:
+        print("错误: 未找到对应发布单")
+        return
+
+    removed = db.remove_active_monitor(release_id)
+    if removed:
+        print(f"\n✓ 发布单 {release['release_no']} 已从活跃监控队列移除")
+    else:
+        print(f"\n发布单 {release['release_no']} 不在活跃监控队列中")
+
+
+def cmd_monitor_list(args):
+    """列出活跃监控"""
+    monitors = db.list_active_monitors(status=None)
+    running = [m for m in monitors if m['status'] == 'RUNNING']
+
+    print(f"\n{'='*90}")
+    print(f"  活跃监控列表 (共 {len(monitors)} 条, 运行中 {len(running)} 条)")
+    print(f"{'='*90}")
+    print(f"  {'ID':<5} {'发布单号':<22} {'版本':<14} {'风险':<6} "
+          f"{'状态':<10} {'检查次数':<8} {'上次检查':<20} {'下次检查':<20}")
+    for m in monitors:
+        print(
+            f"  {m['id']:<5} {m['release_no']:<22} "
+            f"{(m.get('version') or '-'):<14} "
+            f"{RISK_LEVELS.get(m.get('risk_level', ''), {}).get('name', '-'):<6} "
+            f"{m['status']:<10} "
+            f"{m.get('check_count', 0):<8} "
+            f"{(m.get('last_check_at') or '-'):<20} "
+            f"{(m.get('next_check_at') or '-'):<20}"
+        )
+    print(f"{'='*90}")
+
+
+def cmd_monitor_daemon(args):
+    """监控守护进程控制"""
+    sub = getattr(args, 'daemon_subcommand', None)
+
+    if sub == 'start':
+        result = monitor_daemon.start()
+        print(f"\n{result['message']}")
+        if result.get('pid'):
+            print(f"  PID: {result['pid']}")
+        print(f"\n查看状态: python main.py monitor daemon status")
+        print(f"查看列表: python main.py monitor list")
+
+    elif sub == 'stop':
+        result = monitor_daemon.stop()
+        print(f"\n{result['message']}")
+        if result.get('pid'):
+            print(f"  PID: {result['pid']}")
+
+    elif sub == 'status':
+        result = monitor_daemon.status()
+        print(f"\n{'='*50}")
+        print(f"  监控守护进程状态")
+        print(f"{'='*50}")
+        print(f"  运行状态: {'运行中 ✓' if result['running'] else '未运行 ✗'}")
+        if result['pid']:
+            print(f"  进程PID:  {result['pid']}")
+        print(f"  活跃监控: {result['active_monitor_count']} 个")
+        if result['active_monitors']:
+            print(f"  发布单列表:")
+            for m in result['active_monitors']:
+                print(f"    - {m['release_no']}")
+        print(f"{'='*50}")
+
+    elif sub == 'run':
+        monitor_daemon.run_loop()
+
+
+def cmd_start_monitor(args):
+    """启动监控（兼容旧命令，改为加入活跃队列并确保daemon运行）"""
+    cmd_monitor_add(args)
+    print()
+    if not monitor_daemon.is_running():
+        print("检测到守护进程未启动，正在启动...")
+        monitor_daemon.start()
 
 
 def cmd_rollback(args):
@@ -407,6 +491,38 @@ def cmd_report(args):
         for fmt, path in result['files'].items():
             print(f"    [{fmt.upper()}] {path}")
         print(f"{'='*60}")
+
+    elif sub == 'scheduler':
+        sched_sub = getattr(args, 'sched_subcommand', None)
+        if sched_sub == 'start':
+            result = weekly_scheduler.start()
+            print(result['message'])
+            if result.get('pid'):
+                print(f"PID: {result['pid']}")
+        elif sched_sub == 'stop':
+            result = weekly_scheduler.stop()
+            print(result['message'])
+        elif sched_sub == 'status':
+            result = weekly_scheduler.status()
+            print(f"运行状态: {'运行中' if result['running'] else '未运行'}")
+            if result.get('pid'):
+                print(f"PID: {result['pid']}")
+            print(f"调度规则: {result['schedule']}")
+            if result.get('last_run_date'):
+                print(f"上次生成: {result['last_run_date']}")
+            else:
+                print("上次生成: 无记录")
+        elif sched_sub == 'run':
+            print("周报告调度器已启动(前台模式), Ctrl+C 停止")
+            weekly_scheduler.run_loop()
+        elif sched_sub == 'run-now':
+            print("立即生成周报告...")
+            result = weekly_scheduler.run_now()
+            print(f"\n生成完成，文件路径:")
+            for fmt, path in result.get('files', {}).items():
+                print(f"  [{fmt.upper()}] {path}")
+        else:
+            print("请指定子命令: start/stop/status/run/run-now")
 
     elif sub == 'export':
         start_time = args.start_time
@@ -628,11 +744,36 @@ def build_parser():
     p_release.set_defaults(func=cmd_gray_release)
 
     p_monitor = subparsers.add_parser('monitor', help='监控相关')
-    p_monitor.add_argument('--release-id', type=int, required=True, help='发布单ID')
-    p_monitor.add_argument('--check', action='store_true', help='立即执行一次检查')
-    p_monitor.add_argument('--start', action='store_true', help='启动后台监控')
-    p_monitor.add_argument('--force-abnormal', action='store_true', help='模拟异常')
-    p_monitor.set_defaults(func=lambda args: (cmd_start_monitor(args) if args.start else cmd_check_monitor(args)))
+    monitor_sub = p_monitor.add_subparsers(dest='monitor_subcommand')
+
+    p_mc = monitor_sub.add_parser('check', help='立即执行一次检查')
+    p_mc.add_argument('--release-id', type=int, required=True, help='发布单ID')
+    p_mc.add_argument('--force-abnormal', action='store_true', help='模拟异常')
+    p_mc.add_argument('--auto-rollback', action='store_true', help='发现异常自动触发回滚')
+    p_mc.set_defaults(func=cmd_check_monitor)
+
+    p_ma = monitor_sub.add_parser('add', help='加入活跃监控队列')
+    p_ma.add_argument('--release-id', type=int, required=True, help='发布单ID')
+    p_ma.add_argument('--operator', default='cli', help='操作人')
+    p_ma.set_defaults(func=cmd_monitor_add)
+
+    p_mr = monitor_sub.add_parser('remove', help='从活跃监控队列移除')
+    p_mr.add_argument('--release-id', type=int, required=True, help='发布单ID')
+    p_mr.set_defaults(func=cmd_monitor_remove)
+
+    p_ml = monitor_sub.add_parser('list', help='列出活跃监控')
+    p_ml.set_defaults(func=cmd_monitor_list)
+
+    p_md = monitor_sub.add_parser('daemon', help='监控守护进程控制')
+    daemon_sub = p_md.add_subparsers(dest='daemon_subcommand')
+    p_ds = daemon_sub.add_parser('start', help='启动守护进程')
+    p_ds.set_defaults(func=cmd_monitor_daemon)
+    p_dp = daemon_sub.add_parser('stop', help='停止守护进程')
+    p_dp.set_defaults(func=cmd_monitor_daemon)
+    p_dt = daemon_sub.add_parser('status', help='查看守护进程状态')
+    p_dt.set_defaults(func=cmd_monitor_daemon)
+    p_dr = daemon_sub.add_parser('run', help='前台运行守护进程(内部用)')
+    p_dr.set_defaults(func=cmd_monitor_daemon)
 
     p_rollback = subparsers.add_parser('rollback', help='手动回滚')
     p_rollback.add_argument('--release-id', type=int, required=True, help='发布单ID')
@@ -666,6 +807,13 @@ def build_parser():
     p_export.add_argument('--version', help='版本模糊匹配')
     p_export.add_argument('--format', choices=['csv', 'xlsx', 'json', 'txt'], help='导出格式')
     p_export.add_argument('--data-type', choices=['releases', 'rollbacks', 'monitors', 'approvals'], help='数据类型')
+    p_sched = report_sub.add_parser('scheduler', help='周报告定时任务')
+    sched_sub = p_sched.add_subparsers(dest='sched_subcommand')
+    sched_sub.add_parser('start', help='启动定时任务')
+    sched_sub.add_parser('stop', help='停止定时任务')
+    sched_sub.add_parser('status', help='查看状态')
+    sched_sub.add_parser('run', help='前台运行(调试用)')
+    sched_sub.add_parser('run-now', help='立即生成一次周报告')
     p_report.set_defaults(func=cmd_report)
 
     p_list = subparsers.add_parser('list', help='查询发布列表')

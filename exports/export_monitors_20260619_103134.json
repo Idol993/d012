@@ -1,0 +1,58 @@
+[
+  {
+    "id": 25,
+    "release_id": 4,
+    "release_no": "TEST-EMERG-002",
+    "warehouse_id": "WH001",
+    "check_time": "2026-06-19 10:30:16",
+    "putaway_error_rate": 0.0465,
+    "outbound_delay_rate": 0.0374,
+    "inventory_diff_rate": 0.0056,
+    "total_orders": 4358,
+    "abnormal_orders": 129,
+    "is_abnormal": 1,
+    "alert_details": "{\"putaway_error\": \"上架错误率 4.65% 超过阈值 2.00%\", \"outbound_delay\": \"出库延迟率 3.74% 超过阈值 3.00%\", \"inventory_diff\": \"库存差异率 0.56% 超过阈值 0.50%\"}"
+  },
+  {
+    "id": 17,
+    "release_id": 4,
+    "release_no": "TEST-EMERG-002",
+    "warehouse_id": "WH001",
+    "check_time": "2026-06-19 10:30:04",
+    "putaway_error_rate": 0.027,
+    "outbound_delay_rate": 0.0447,
+    "inventory_diff_rate": 0.0088,
+    "total_orders": 4110,
+    "abnormal_orders": 110,
+    "is_abnormal": 1,
+    "alert_details": "{\"putaway_error\": \"上架错误率 2.70% 超过阈值 2.00%\", \"outbound_delay\": \"出库延迟率 4.47% 超过阈值 3.00%\", \"inventory_diff\": \"库存差异率 0.88% 超过阈值 0.50%\"}"
+  },
+  {
+    "id": 9,
+    "release_id": 2,
+    "release_no": "REL-20260619_093038",
+    "warehouse_id": "WH001",
+    "check_time": "2026-06-19 09:30:47",
+    "putaway_error_rate": 0.0022,
+    "outbound_delay_rate": 0.0187,
+    "inventory_diff_rate": 0.0018,
+    "total_orders": 3944,
+    "abnormal_orders": 29,
+    "is_abnormal": 0,
+    "alert_details": "{}"
+  },
+  {
+    "id": 1,
+    "release_id": 2,
+    "release_no": "REL-20260619_093038",
+    "warehouse_id": "WH001",
+    "check_time": "2026-06-19 09:30:44",
+    "putaway_error_rate": 0.0221,
+    "outbound_delay_rate": 0.0575,
+    "inventory_diff_rate": 0.0087,
+    "total_orders": 4779,
+    "abnormal_orders": 140,
+    "is_abnormal": 1,
+    "alert_details": "{\"putaway_error\": \"上架错误率 2.21% 超过阈值 2.00%\", \"outbound_delay\": \"出库延迟率 5.75% 超过阈值 3.00%\", \"inventory_diff\": \"库存差异率 0.87% 超过阈值 0.50%\"}"
+  }
+]

@@ -84,8 +84,11 @@ class MonitorEngine:
         }
 
     def check_release(self, release_id: int, release_no: str,
-                      force_abnormal: bool = False) -> Dict:
-        """检查单个发布单的所有已部署仓库"""
+                      force_abnormal: bool = False,
+                      auto_rollback: bool = False) -> Dict:
+        """检查单个发布单的所有已部署仓库
+        :param auto_rollback: 若发现异常是否自动触发回滚
+        """
         release = db.get_release(release_id=release_id)
         if not release:
             return {'success': False, 'message': '发布单不存在'}
@@ -93,7 +96,7 @@ class MonitorEngine:
         gray_records = db.get_gray_records(release_id)
         deployed_warehouses = [
             r for r in gray_records
-            if r['status'] in ('DEPLOYED', 'VERIFIED', 'FAILED')
+            if r['status'] in ('DEPLOYED', 'VERIFIED', 'FAILED', 'FULL_DEPLOYED')
         ]
 
         if not deployed_warehouses:
@@ -140,6 +143,16 @@ class MonitorEngine:
                 f"{len(abnormal_warehouses)} 个异常仓库, "
                 f"异常订单 {total_abnormal_orders} 单"
             )
+
+            if auto_rollback:
+                log.warning(f"[自动回滚] 监控发现异常，触发自动回滚流程")
+                rb_result = rollback_engine.execute_rollback(
+                    release_id, release_no, 'auto',
+                    f"监控指标异常: {len(abnormal_warehouses)} 个仓库超标",
+                    monitor_result=result,
+                )
+                result['rollback_triggered'] = True
+                result['rollback_result'] = rb_result
 
         return result
 
@@ -402,7 +415,7 @@ class RollbackEngine:
         gray_records = db.get_gray_records(release_id)
         affected_warehouse_ids = [
             r['warehouse_id'] for r in gray_records
-            if r['status'] in ('DEPLOYED', 'VERIFIED', 'FAILED')
+            if r['status'] in ('DEPLOYED', 'VERIFIED', 'FAILED', 'FULL_DEPLOYED')
         ]
         affected_names = [
             WAREHOUSES.get(wid, {}).get('name', wid)
@@ -459,8 +472,9 @@ class RollbackEngine:
         log.audit("回滚执行", operator, release_no,
                   details=result)
 
-        log.info("回滚完成，自动重启监控守护稳定版本...")
-        self.monitor.start_background_monitor(release_id, release_no, None)
+        log.info("回滚完成，加入活跃监控队列守护稳定版本...")
+        db.add_active_monitor(release_id, release_no, added_by=operator)
+        log.info(f"发布单 {release_no} 已加入活跃监控队列，等待守护进程检查")
 
         return result
 
@@ -595,6 +609,212 @@ class RollbackEngine:
             'report_path': report_path,
         }
 
+class MonitorDaemon:
+    """监控守护进程 - 后台常驻，基于 active_monitors 表调度"""
+
+    def __init__(self):
+        self._running = False
+        self.pid_file = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            'data', 'monitor_daemon.pid'
+        )
+
+    def is_running(self) -> bool:
+        """检查守护进程是否在运行"""
+        if not os.path.exists(self.pid_file):
+            return False
+        try:
+            with open(self.pid_file, 'r') as f:
+                pid = int(f.read().strip())
+            import ctypes
+            kernel32 = ctypes.windll.kernel32
+            process = kernel32.OpenProcess(1024, 0, pid)
+            if process:
+                kernel32.CloseHandle(process)
+                return True
+            return False
+        except Exception:
+            return False
+
+    def get_pid(self):
+        if os.path.exists(self.pid_file):
+            try:
+                with open(self.pid_file, 'r') as f:
+                    return int(f.read().strip())
+            except:
+                return None
+        return None
+
+    def start(self) -> Dict:
+        """启动后台守护进程"""
+        if self.is_running():
+            return {'success': False, 'message': '监控守护进程已在运行', 'pid': self.get_pid()}
+
+        import sys
+        import subprocess
+
+        script_path = os.path.abspath(__file__)
+        project_dir = os.path.dirname(script_path)
+        main_path = os.path.join(project_dir, 'main.py')
+
+        python_exe = sys.executable
+
+        if os.name == 'nt':
+            DETACHED_PROCESS = 0x00000008
+            CREATE_NEW_PROCESS_GROUP = 0x00000200
+            flags = DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP
+            subprocess.Popen(
+                [python_exe, main_path, 'monitor', 'daemon', 'run'],
+                cwd=project_dir,
+                creationflags=flags,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+        else:
+            subprocess.Popen(
+                [python_exe, main_path, 'monitor', 'daemon', 'run'],
+                cwd=project_dir,
+                start_new_session=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+
+        import time
+        for _ in range(10):
+            time.sleep(0.5)
+            if self.is_running():
+                break
+
+        pid = self.get_pid()
+        log.info(f"监控守护进程已启动, PID={pid}")
+        log.audit("启动监控守护进程", "system", "monitor_daemon",
+                  details={"pid": pid})
+        return {'success': True, 'message': '监控守护进程已启动', 'pid': pid}
+
+    def stop(self) -> Dict:
+        """停止守护进程"""
+        if not self.is_running():
+            return {'success': True, 'message': '监控守护进程未在运行'}
+
+        pid = self.get_pid()
+        try:
+            if os.name == 'nt':
+                import ctypes
+                kernel32 = ctypes.windll.kernel32
+                process = kernel32.OpenProcess(1, 0, pid)
+                if process:
+                    kernel32.TerminateProcess(process, 0)
+                    kernel32.CloseHandle(process)
+            else:
+                import signal
+                os.kill(pid, signal.SIGTERM)
+        except Exception as e:
+            log.warning(f"停止守护进程异常: {e}")
+
+        try:
+            if os.path.exists(self.pid_file):
+                os.remove(self.pid_file)
+        except:
+            pass
+
+        log.info(f"监控守护进程已停止, PID={pid}")
+        log.audit("停止监控守护进程", "system", "monitor_daemon",
+                  details={"pid": pid})
+        return {'success': True, 'message': '监控守护进程已停止', 'pid': pid}
+
+    def status(self) -> Dict:
+        """获取守护进程状态"""
+        running = self.is_running()
+        active_monitors = db.list_active_monitors(status='RUNNING')
+        return {
+            'running': running,
+            'pid': self.get_pid() if running else None,
+            'active_monitor_count': len(active_monitors),
+            'active_monitors': active_monitors,
+        }
+
+    def run_loop(self):
+        """守护进程主循环 - 阻塞运行"""
+        pid = os.getpid()
+        with open(self.pid_file, 'w') as f:
+            f.write(str(pid))
+
+        log.info(f"[守护进程] 监控守护进程启动, PID={pid}")
+        log.audit("监控守护进程启动", "system", "monitor_daemon",
+                  details={"pid": pid})
+
+        self._running = True
+        import signal
+
+        def _handle_signal(signum, frame):
+            log.info(f"[守护进程] 收到信号 {signum}, 准备退出")
+            self._running = False
+
+        if os.name != 'nt':
+            signal.signal(signal.SIGTERM, _handle_signal)
+            signal.signal(signal.SIGINT, _handle_signal)
+
+        try:
+            while self._running:
+                try:
+                    self._tick()
+                except Exception as e:
+                    log.error(f"[守护进程] 循环异常: {str(e)}", exc_info=True)
+                time.sleep(10)
+        finally:
+            try:
+                if os.path.exists(self.pid_file):
+                    os.remove(self.pid_file)
+            except:
+                pass
+            log.info("[守护进程] 监控守护进程已退出")
+
+    def _tick(self):
+        """单次调度：检查所有到期的活跃监控"""
+        to_check = db.get_monitors_to_check()
+        if not to_check:
+            return
+
+        log.debug(f"[守护进程] 本轮需检查 {len(to_check)} 个发布单")
+
+        for am in to_check:
+            release_id = am['release_id']
+            release_no = am['release_no']
+
+            release = db.get_release(release_id=release_id)
+            if not release:
+                db.remove_active_monitor(release_id)
+                continue
+
+            if release['status'] in ('ROLLBACK_SUCCESS', 'ROLLBACK_FAILED',
+                                     'RELEASE_SUCCESS', 'CANCELLED',
+                                     'APPROVAL_REJECTED', 'PRECHECK_FAILED'):
+                if release['status'] in ('RELEASE_SUCCESS',):
+                    pass
+                if release['status'] in ('ROLLBACK_SUCCESS', 'ROLLBACK_FAILED',
+                                         'CANCELLED', 'APPROVAL_REJECTED',
+                                         'PRECHECK_FAILED'):
+                    db.remove_active_monitor(release_id)
+                    log.info(f"[守护进程] 发布单 {release_no} 状态为 {release['status']}, 移除监控")
+                    continue
+
+            try:
+                result = monitor_engine.check_release(
+                    release_id, release_no, auto_rollback=True
+                )
+
+                if result.get('rollback_triggered'):
+                    log.warning(
+                        f"[守护进程] 发布单 {release_no} 已触发自动回滚, "
+                        f"继续监控稳定版本"
+                    )
+
+            except Exception as e:
+                log.error(f"[守护进程] 检查发布单 {release_no} 异常: {e}")
+
+            db.update_monitor_check(release_id)
+
 
 monitor_engine = MonitorEngine()
 rollback_engine = RollbackEngine()
+monitor_daemon = MonitorDaemon()
