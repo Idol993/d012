@@ -452,6 +452,69 @@ class RollbackEngine:
         final_status = 'ROLLBACK_SUCCESS' if rollback_success else 'ROLLBACK_FAILED'
         db.update_release_status(release_id, final_status)
 
+        log.info("开始回滚后稳定性复查...")
+        post_check_result = self.monitor.check_release(release_id, release_no, force_abnormal=False)
+        post_abnormal = post_check_result.get('abnormal_count', 0)
+        post_checked = post_check_result.get('checked_count', 0)
+        need_human = post_check_result.get('is_abnormal', False)
+        post_check_summary = {
+            'status': 'healthy' if not need_human else 'abnormal_needs_manual',
+            'need_manual_intervention': need_human,
+            'checked_warehouses': post_checked,
+            'abnormal_warehouses': post_abnormal,
+            'total_abnormal_orders': post_check_result.get('total_abnormal_orders', 0),
+            'checked_at': get_current_time_str(),
+            'warehouse_metrics': post_check_result.get('all_metrics', []),
+        }
+        db.update_rollback_record(rollback_id, post_rollback_check=post_check_summary)
+
+        if need_human:
+            log.warning(f"回滚后复查仍异常: {post_abnormal}/{post_checked} 个仓库超标, 需要人工介入")
+        else:
+            log.info(f"回滚后复查通过: {post_checked} 个仓库全部健康")
+
+        for rp in report_path.split(','):
+            rp = rp.strip()
+            if rp and rp.endswith('.json') and os.path.exists(rp):
+                try:
+                    with open(rp, 'r', encoding='utf-8') as f:
+                        report_data = json.load(f)
+                    report_data['post_rollback_check'] = post_check_summary
+                    ia = report_data.get('impact_assessment', {})
+                    ia['post_check_status'] = post_check_summary['status']
+                    ia['post_check_need_manual'] = need_human
+                    with open(rp, 'w', encoding='utf-8') as f:
+                        json.dump(report_data, f, ensure_ascii=False, indent=2)
+                except Exception as e:
+                    log.warning(f"更新回滚报告失败: {rp}, {e}")
+
+        txt_paths = [p.strip() for p in report_path.split(',') if p.strip().endswith('.txt')]
+        for tp in txt_paths:
+            if tp and os.path.exists(tp):
+                try:
+                    with open(tp, 'r', encoding='utf-8') as f:
+                        txt = f.read()
+                    appendix = "\n\n" + "=" * 70 + "\n"
+                    appendix += "  回滚后稳定性复查\n"
+                    appendix += "=" * 70 + "\n"
+                    appendix += f"  复查时间: {post_check_summary['checked_at']}\n"
+                    appendix += f"  复查结果: {'健康' if not need_human else '异常 - 需要人工介入'}\n"
+                    appendix += f"  检查仓库数: {post_checked}\n"
+                    appendix += f"  异常仓库数: {post_abnormal}\n"
+                    appendix += f"  异常订单数: {post_check_result.get('total_abnormal_orders', 0)}\n"
+                    if post_check_result.get('all_metrics'):
+                        appendix += "\n  各仓库指标:\n"
+                        for m in post_check_result['all_metrics']:
+                            icon = "异常" if m.get('is_abnormal') else "正常"
+                            appendix += (f"    {m['warehouse_id']}({m['warehouse_name']}) [{icon}]: "
+                                         f"上架错误率={m['putaway_error_rate']:.2%}, "
+                                         f"出库延迟率={m['outbound_delay_rate']:.2%}, "
+                                         f"库存差异率={m['inventory_diff_rate']:.2%}\n")
+                    with open(tp, 'w', encoding='utf-8') as f:
+                        f.write(txt + appendix)
+                except Exception as e:
+                    log.warning(f"更新回滚TXT报告失败: {tp}, {e}")
+
         result = {
             'success': rollback_success,
             'rollback_id': rollback_id,
@@ -464,6 +527,7 @@ class RollbackEngine:
             'report_path': report_path,
             'trigger_type': trigger_type,
             'trigger_reason': trigger_reason,
+            'post_rollback_check': post_check_summary,
         }
 
         log.warning(f"回滚{'成功' if rollback_success else '失败'}: "

@@ -191,6 +191,12 @@ class Database:
                 except sqlite3.OperationalError:
                     pass
 
+                try:
+                    cursor.execute("ALTER TABLE rollback_records ADD COLUMN post_rollback_check TEXT")
+                    log.info("rollback_records 表新增 post_rollback_check 列")
+                except sqlite3.OperationalError:
+                    pass
+
                 log.info("数据库初始化完成")
 
     # ==================== Release 相关 ====================

@@ -1,32 +1,66 @@
 {
   "report_title": "WMS 系统发布周度统计报告",
   "week_range": "2026-06-15 ~ 2026-06-22",
-  "generated_at": "2026-06-19 12:35:01",
+  "generated_at": "2026-06-19 13:01:48",
   "summary": {
-    "total_releases": 14,
+    "total_releases": 16,
     "success_count": 1,
-    "rollback_count": 7,
+    "rollback_count": 9,
     "rejected_count": 0,
     "precheck_failed_count": 1,
     "normal_count": 6,
-    "emergency_count": 8,
-    "success_rate": 7.14,
-    "rollback_rate": 50.0
+    "emergency_count": 10,
+    "success_rate": 6.25,
+    "rollback_rate": 56.25
   },
   "status_breakdown": {
     "CREATED": 2,
     "PRECHECK_FAILED": 1,
     "RELEASE_SUCCESS": 1,
     "ROLLBACK_FAILED": 3,
-    "ROLLBACK_SUCCESS": 7
+    "ROLLBACK_SUCCESS": 9
   },
   "daily_trend": [
     {
       "day": "2026-06-19",
-      "cnt": 14
+      "cnt": 16
     }
   ],
   "releases": [
+    {
+      "id": 16,
+      "release_no": "FINAL-1781845306",
+      "version": "vFINAL-88",
+      "risk_level": "emergency",
+      "title": "最终验收-紧急发布",
+      "description": "测试",
+      "changelog": "test",
+      "submitter": "qa",
+      "status": "ROLLBACK_SUCCESS",
+      "precheck_result": null,
+      "precheck_passed": 0,
+      "rollback_version": "vSTABLE-1",
+      "created_at": "2026-06-19 13:01:46",
+      "updated_at": "2026-06-19 13:01:48",
+      "finished_at": "2026-06-19 13:01:48"
+    },
+    {
+      "id": 15,
+      "release_no": "FINAL-1781845285",
+      "version": "vFINAL-88",
+      "risk_level": "emergency",
+      "title": "最终验收-紧急发布",
+      "description": "测试",
+      "changelog": "test",
+      "submitter": "qa",
+      "status": "ROLLBACK_SUCCESS",
+      "precheck_result": null,
+      "precheck_passed": 0,
+      "rollback_version": "vSTABLE-1",
+      "created_at": "2026-06-19 13:01:25",
+      "updated_at": "2026-06-19 13:01:28",
+      "finished_at": "2026-06-19 13:01:28"
+    },
     {
       "id": 14,
       "release_no": "VERIFY-EMERG-1781843698",
@@ -268,6 +302,40 @@
   ],
   "rollbacks": [
     {
+      "id": 13,
+      "release_id": 16,
+      "release_no": "FINAL-1781845306",
+      "trigger_type": "auto",
+      "trigger_reason": "监控指标异常: 8 个仓库超标",
+      "rollback_version": "vSTABLE-1",
+      "affected_warehouses": "[\"华东中心仓\", \"华南中心仓\", \"华北中心仓\", \"西南区域仓\", \"华中区域仓\", \"东北区域仓\", \"西北区域仓\", \"海外保税仓\"]",
+      "affected_orders": 679,
+      "root_cause": "上架错误率异常: 上架错误率 2.09% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 3.13% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.54% 超过阈值 0.50%\n上架错误率异常: 上架错误率 3.71% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 4.14% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.90% 超过阈值 0.50%\n上架错误率异常: 上架错误率 4.24% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 3.37% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.54% 超过阈值 0.50%\n上架错误率异常: 上架错误率 3.22% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 3.34% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.80% 超过阈值 0.50%\n上架错误率异常: 上架错误率 2.61% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 5.54% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.72% 超过阈值 0.50%\n上架错误率异常: 上架错误率 3.23% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 3.16% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.60% 超过阈值 0.50%\n上架错误率异常: 上架错误率 3.05% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 4.41% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.69% 超过阈值 0.50%\n上架错误率异常: 上架错误率 4.80% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 3.02% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.54% 超过阈值 0.50%",
+      "status": "ROLLBACK_SUCCESS",
+      "report_path": "E:\\work\\d012\\reports\\rollback_report_FINAL-1781845306_20260619_130146.json",
+      "operator": "system",
+      "started_at": "2026-06-19 13:01:46",
+      "finished_at": "2026-06-19 13:01:48",
+      "post_rollback_check": "{\"status\": \"abnormal_needs_manual\", \"need_manual_intervention\": true, \"checked_warehouses\": 8, \"abnormal_warehouses\": 2, \"total_abnormal_orders\": 113, \"checked_at\": \"2026-06-19 13:01:48\", \"warehouse_metrics\": [{\"warehouse_id\": \"WH001\", \"warehouse_name\": \"华东中心仓\", \"putaway_error_rate\": 0.0145, \"outbound_delay_rate\": 0.0239, \"inventory_diff_rate\": 0.0029, \"total_orders\": 4568, \"abnormal_orders\": 62, \"is_abnormal\": false, \"alert_details\": {}, \"status\": \"healthy\"}, {\"warehouse_id\": \"WH002\", \"warehouse_name\": \"华南中心仓\", \"putaway_error_rate\": 0.0131, \"outbound_delay_rate\": 0.0019, \"inventory_diff_rate\": 0.0035, \"total_orders\": 2098, \"abnormal_orders\": 12, \"is_abnormal\": false, \"alert_details\": {}, \"status\": \"healthy\"}, {\"warehouse_id\": \"WH003\", \"warehouse_name\": \"华北中心仓\", \"putaway_error_rate\": 0.0049, \"outbound_delay_rate\": 0.0118, \"inventory_diff_rate\": 0.0001, \"total_orders\": 2089, \"abnormal_orders\": 11, \"is_abnormal\": false, \"alert_details\": {}, \"status\": \"healthy\"}, {\"warehouse_id\": \"WH004\", \"warehouse_name\": \"西南区域仓\", \"putaway_error_rate\": 0.0373, \"outbound_delay_rate\": 0.055, \"inventory_diff_rate\": 0.0095, \"total_orders\": 945, \"abnormal_orders\": 32, \"is_abnormal\": true, \"alert_details\": {\"putaway_error\": \"上架错误率 3.73% 超过阈值 2.00%\", \"outbound_delay\": \"出库延迟率 5.50% 超过阈值 3.00%\", \"inventory_diff\": \"库存差异率 0.95% 超过阈值 0.50%\"}, \"status\": \"abnormal\"}, {\"warehouse_id\": \"WH005\", \"warehouse_name\": \"华中区域仓\", \"putaway_error_rate\": 0.0115, \"outbound_delay_rate\": 0.0121, \"inventory_diff_rate\": 0.0008, \"total_orders\": 1937, \"abnormal_orders\": 15, \"is_abnormal\": false, \"alert_details\": {}, \"status\": \"healthy\"}, {\"warehouse_id\": \"WH006\", \"warehouse_name\": \"东北区域仓\", \"putaway_error_rate\": 0.0037, \"outbound_delay_rate\": 0.0068, \"inventory_diff_rate\": 0.0028, \"total_orders\": 1081, \"abnormal_orders\": 4, \"is_abnormal\": false, \"alert_details\": {}, \"status\": \"healthy\"}, {\"warehouse_id\": \"WH007\", \"warehouse_name\": \"西北区域仓\", \"putaway_error_rate\": 0.0117, \"outbound_delay_rate\": 0.0217, \"inventory_diff_rate\": 0.0006, \"total_orders\": 1398, \"abnormal_orders\": 15, \"is_abnormal\": false, \"alert_details\": {}, \"status\": \"healthy\"}, {\"warehouse_id\": \"WH008\", \"warehouse_name\": \"海外保税仓\", \"putaway_error_rate\": 0.0408, \"outbound_delay_rate\": 0.0584, \"inventory_diff_rate\": 0.009, \"total_orders\": 2254, \"abnormal_orders\": 81, \"is_abnormal\": true, \"alert_details\": {\"putaway_error\": \"上架错误率 4.08% 超过阈值 2.00%\", \"outbound_delay\": \"出库延迟率 5.84% 超过阈值 3.00%\", \"inventory_diff\": \"库存差异率 0.90% 超过阈值 0.50%\"}, \"status\": \"abnormal\"}]}"
+    },
+    {
+      "id": 12,
+      "release_id": 15,
+      "release_no": "FINAL-1781845285",
+      "trigger_type": "auto",
+      "trigger_reason": "监控指标异常: 8 个仓库超标",
+      "rollback_version": "vSTABLE-1",
+      "affected_warehouses": "[\"华东中心仓\", \"华南中心仓\", \"华北中心仓\", \"西南区域仓\", \"华中区域仓\", \"东北区域仓\", \"西北区域仓\", \"海外保税仓\"]",
+      "affected_orders": 546,
+      "root_cause": "上架错误率异常: 上架错误率 2.88% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 5.49% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.97% 超过阈值 0.50%\n上架错误率异常: 上架错误率 4.91% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 5.70% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.99% 超过阈值 0.50%\n上架错误率异常: 上架错误率 3.31% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 4.19% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.84% 超过阈值 0.50%\n上架错误率异常: 上架错误率 3.14% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 3.61% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.72% 超过阈值 0.50%\n上架错误率异常: 上架错误率 3.78% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 3.20% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.74% 超过阈值 0.50%\n上架错误率异常: 上架错误率 4.28% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 3.81% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.63% 超过阈值 0.50%\n上架错误率异常: 上架错误率 2.20% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 3.57% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.94% 超过阈值 0.50%\n上架错误率异常: 上架错误率 4.96% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 4.09% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.52% 超过阈值 0.50%",
+      "status": "ROLLBACK_SUCCESS",
+      "report_path": "E:\\work\\d012\\reports\\rollback_report_FINAL-1781845285_20260619_130125.json",
+      "operator": "system",
+      "started_at": "2026-06-19 13:01:25",
+      "finished_at": "2026-06-19 13:01:28",
+      "post_rollback_check": "{\"status\": \"abnormal_needs_manual\", \"need_manual_intervention\": true, \"checked_warehouses\": 8, \"abnormal_warehouses\": 1, \"total_abnormal_orders\": 136, \"checked_at\": \"2026-06-19 13:01:28\", \"warehouse_metrics\": [{\"warehouse_id\": \"WH001\", \"warehouse_name\": \"华东中心仓\", \"putaway_error_rate\": 0.0119, \"outbound_delay_rate\": 0.0094, \"inventory_diff_rate\": 0.0024, \"total_orders\": 3753, \"abnormal_orders\": 29, \"is_abnormal\": false, \"alert_details\": {}, \"status\": \"healthy\"}, {\"warehouse_id\": \"WH002\", \"warehouse_name\": \"华南中心仓\", \"putaway_error_rate\": 0.0038, \"outbound_delay_rate\": 0.0216, \"inventory_diff_rate\": 0.0005, \"total_orders\": 1376, \"abnormal_orders\": 11, \"is_abnormal\": false, \"alert_details\": {}, \"status\": \"healthy\"}, {\"warehouse_id\": \"WH003\", \"warehouse_name\": \"华北中心仓\", \"putaway_error_rate\": 0.005, \"outbound_delay_rate\": 0.0194, \"inventory_diff_rate\": 0.0015, \"total_orders\": 4918, \"abnormal_orders\": 42, \"is_abnormal\": false, \"alert_details\": {}, \"status\": \"healthy\"}, {\"warehouse_id\": \"WH004\", \"warehouse_name\": \"西南区域仓\", \"putaway_error_rate\": 0.0032, \"outbound_delay_rate\": 0.0035, \"inventory_diff_rate\": 0.001, \"total_orders\": 1594, \"abnormal_orders\": 4, \"is_abnormal\": false, \"alert_details\": {}, \"status\": \"healthy\"}, {\"warehouse_id\": \"WH005\", \"warehouse_name\": \"华中区域仓\", \"putaway_error_rate\": 0.0002, \"outbound_delay_rate\": 0.0149, \"inventory_diff_rate\": 0.0013, \"total_orders\": 3669, \"abnormal_orders\": 20, \"is_abnormal\": false, \"alert_details\": {}, \"status\": \"healthy\"}, {\"warehouse_id\": \"WH006\", \"warehouse_name\": \"东北区域仓\", \"putaway_error_rate\": 0.0287, \"outbound_delay_rate\": 0.0583, \"inventory_diff_rate\": 0.0093, \"total_orders\": 4266, \"abnormal_orders\": 136, \"is_abnormal\": true, \"alert_details\": {\"putaway_error\": \"上架错误率 2.87% 超过阈值 2.00%\", \"outbound_delay\": \"出库延迟率 5.83% 超过阈值 3.00%\", \"inventory_diff\": \"库存差异率 0.93% 超过阈值 0.50%\"}, \"status\": \"abnormal\"}, {\"warehouse_id\": \"WH007\", \"warehouse_name\": \"西北区域仓\", \"putaway_error_rate\": 0.0136, \"outbound_delay_rate\": 0.0185, \"inventory_diff_rate\": 0.0027, \"total_orders\": 4711, \"abnormal_orders\": 54, \"is_abnormal\": false, \"alert_details\": {}, \"status\": \"healthy\"}, {\"warehouse_id\": \"WH008\", \"warehouse_name\": \"海外保税仓\", \"putaway_error_rate\": 0.0115, \"outbound_delay_rate\": 0.0109, \"inventory_diff_rate\": 0.0016, \"total_orders\": 2317, \"abnormal_orders\": 18, \"is_abnormal\": false, \"alert_details\": {}, \"status\": \"healthy\"}]}"
+    },
+    {
       "id": 11,
       "release_id": 14,
       "release_no": "VERIFY-EMERG-1781843698",
@@ -281,7 +349,8 @@
       "report_path": "E:\\work\\d012\\reports\\rollback_report_VERIFY-EMERG-1781843698_20260619_123459.json",
       "operator": "system",
       "started_at": "2026-06-19 12:34:59",
-      "finished_at": "2026-06-19 12:35:01"
+      "finished_at": "2026-06-19 12:35:01",
+      "post_rollback_check": null
     },
     {
       "id": 10,
@@ -297,7 +366,8 @@
       "report_path": "E:\\work\\d012\\reports\\rollback_report_QUICK-1781842469_20260619_121435.json",
       "operator": "system",
       "started_at": "2026-06-19 12:14:35",
-      "finished_at": "2026-06-19 12:14:37"
+      "finished_at": "2026-06-19 12:14:37",
+      "post_rollback_check": null
     },
     {
       "id": 9,
@@ -313,7 +383,8 @@
       "report_path": "E:\\work\\d012\\reports\\rollback_report_E2E-1-1781842365_20260619_121250.json",
       "operator": "system",
       "started_at": "2026-06-19 12:12:50",
-      "finished_at": "2026-06-19 12:12:52"
+      "finished_at": "2026-06-19 12:12:52",
+      "post_rollback_check": null
     },
     {
       "id": 8,
@@ -329,7 +400,8 @@
       "report_path": "E:\\work\\d012\\reports\\rollback_report_E2E-4-1781842360_20260619_121241.json",
       "operator": "system",
       "started_at": "2026-06-19 12:12:41",
-      "finished_at": "2026-06-19 12:12:43"
+      "finished_at": "2026-06-19 12:12:43",
+      "post_rollback_check": null
     },
     {
       "id": 7,
@@ -345,7 +417,8 @@
       "report_path": "E:\\work\\d012\\reports\\rollback_report_E2E-3-1781842358_20260619_121238.json",
       "operator": "system",
       "started_at": "2026-06-19 12:12:38",
-      "finished_at": "2026-06-19 12:12:40"
+      "finished_at": "2026-06-19 12:12:40",
+      "post_rollback_check": null
     },
     {
       "id": 6,
@@ -361,7 +434,8 @@
       "report_path": "E:\\work\\d012\\reports\\rollback_report_E2E-EMERG-1781837489_20260619_105129.json",
       "operator": "system",
       "started_at": "2026-06-19 10:51:29",
-      "finished_at": "2026-06-19 10:51:32"
+      "finished_at": "2026-06-19 10:51:32",
+      "post_rollback_check": null
     },
     {
       "id": 5,
@@ -377,7 +451,8 @@
       "report_path": "E:\\work\\d012\\reports\\rollback_report_E2E-EMERG-1781837349_20260619_104909.json",
       "operator": "system",
       "started_at": "2026-06-19 10:49:09",
-      "finished_at": "2026-06-19 10:49:11"
+      "finished_at": "2026-06-19 10:49:11",
+      "post_rollback_check": null
     },
     {
       "id": 4,
@@ -393,7 +468,8 @@
       "report_path": "E:\\work\\d012\\reports\\rollback_report_E2E-EMERG-1781837209_20260619_104649.json",
       "operator": "system",
       "started_at": "2026-06-19 10:46:49",
-      "finished_at": "2026-06-19 10:46:51"
+      "finished_at": "2026-06-19 10:46:51",
+      "post_rollback_check": null
     },
     {
       "id": 3,
@@ -409,7 +485,8 @@
       "report_path": "E:\\work\\d012\\reports\\rollback_report_TEST-EMERG-002_20260619_103016.json",
       "operator": "system",
       "started_at": "2026-06-19 10:30:16",
-      "finished_at": "2026-06-19 10:30:16"
+      "finished_at": "2026-06-19 10:30:16",
+      "post_rollback_check": null
     },
     {
       "id": 2,
@@ -425,7 +502,8 @@
       "report_path": "E:\\work\\d012\\reports\\rollback_report_TEST-EMERG-002_20260619_103004.json",
       "operator": "system",
       "started_at": "2026-06-19 10:30:04",
-      "finished_at": "2026-06-19 10:30:04"
+      "finished_at": "2026-06-19 10:30:04",
+      "post_rollback_check": null
     },
     {
       "id": 1,
@@ -441,7 +519,8 @@
       "report_path": "E:\\work\\d012\\reports\\rollback_report_REL-20260619_093038_20260619_093044.json",
       "operator": "system",
       "started_at": "2026-06-19 09:30:44",
-      "finished_at": "2026-06-19 09:30:47"
+      "finished_at": "2026-06-19 09:30:47",
+      "post_rollback_check": null
     }
   ],
   "drills": [
@@ -461,5 +540,351 @@
       "started_at": "2026-06-19 09:30:47",
       "finished_at": "2026-06-19 09:30:48"
     }
-  ]
+  ],
+  "rollback_review": {
+    "total_rollbacks": 13,
+    "success_count": 10,
+    "failed_count": 3,
+    "success_rate": 76.92,
+    "auto_count": 13,
+    "manual_count": 0,
+    "total_affected_warehouses": 88,
+    "total_affected_orders": 6235,
+    "need_manual_intervention_count": 2,
+    "details": [
+      {
+        "rollback_id": 13,
+        "release_no": "FINAL-1781845306",
+        "version": "vFINAL-88",
+        "trigger_type": "auto",
+        "status": "ROLLBACK_SUCCESS",
+        "trigger_reason": "监控指标异常: 8 个仓库超标",
+        "affected_warehouse_count": 8,
+        "affected_warehouses": [
+          "华东中心仓",
+          "华南中心仓",
+          "华北中心仓",
+          "西南区域仓",
+          "华中区域仓",
+          "东北区域仓",
+          "西北区域仓",
+          "海外保税仓"
+        ],
+        "affected_orders": 679,
+        "root_cause": "上架错误率异常: 上架错误率 2.09% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 3.13% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.54% 超过阈值 0.50%\n上架错误率异常: 上架错误率 3.71% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 4.14% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.90% 超过阈值 0.50%\n上架错误率异常: 上架错误率 4.24% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 3.37% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.54% 超过阈值 0.50%\n上架错误率异常: 上架错误率 3.22% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 3.34% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.80% 超过阈值 0.50%\n上架错误率异常: 上架错误率 2.61% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 5.54% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.72% 超过阈值 0.50%\n上架错误率异常: 上架错误率 3.23% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 3.16% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.60% 超过阈值 0.50%\n上架错误率异常: 上架错误率 3.05% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 4.41% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.69% 超过阈值 0.50%\n上架错误率异常: 上架错误率 4.80% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 3.02% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.54% 超过阈值 0.50%",
+        "report_path": "E:\\work\\d012\\reports\\rollback_report_FINAL-1781845306_20260619_130146.json",
+        "post_check_status": "abnormal_needs_manual",
+        "post_check_need_human": true,
+        "post_check_abnormal_wh": 2,
+        "post_check_checked_wh": 8,
+        "created_at": "2026-06-19 13:01:46"
+      },
+      {
+        "rollback_id": 12,
+        "release_no": "FINAL-1781845285",
+        "version": "vFINAL-88",
+        "trigger_type": "auto",
+        "status": "ROLLBACK_SUCCESS",
+        "trigger_reason": "监控指标异常: 8 个仓库超标",
+        "affected_warehouse_count": 8,
+        "affected_warehouses": [
+          "华东中心仓",
+          "华南中心仓",
+          "华北中心仓",
+          "西南区域仓",
+          "华中区域仓",
+          "东北区域仓",
+          "西北区域仓",
+          "海外保税仓"
+        ],
+        "affected_orders": 546,
+        "root_cause": "上架错误率异常: 上架错误率 2.88% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 5.49% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.97% 超过阈值 0.50%\n上架错误率异常: 上架错误率 4.91% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 5.70% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.99% 超过阈值 0.50%\n上架错误率异常: 上架错误率 3.31% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 4.19% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.84% 超过阈值 0.50%\n上架错误率异常: 上架错误率 3.14% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 3.61% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.72% 超过阈值 0.50%\n上架错误率异常: 上架错误率 3.78% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 3.20% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.74% 超过阈值 0.50%\n上架错误率异常: 上架错误率 4.28% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 3.81% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.63% 超过阈值 0.50%\n上架错误率异常: 上架错误率 2.20% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 3.57% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.94% 超过阈值 0.50%\n上架错误率异常: 上架错误率 4.96% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 4.09% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.52% 超过阈值 0.50%",
+        "report_path": "E:\\work\\d012\\reports\\rollback_report_FINAL-1781845285_20260619_130125.json",
+        "post_check_status": "abnormal_needs_manual",
+        "post_check_need_human": true,
+        "post_check_abnormal_wh": 1,
+        "post_check_checked_wh": 8,
+        "created_at": "2026-06-19 13:01:25"
+      },
+      {
+        "rollback_id": 11,
+        "release_no": "VERIFY-EMERG-1781843698",
+        "version": "v7.7.7",
+        "trigger_type": "auto",
+        "status": "ROLLBACK_SUCCESS",
+        "trigger_reason": "监控指标异常: 8 个仓库超标",
+        "affected_warehouse_count": 8,
+        "affected_warehouses": [
+          "华东中心仓",
+          "华南中心仓",
+          "华北中心仓",
+          "西南区域仓",
+          "华中区域仓",
+          "东北区域仓",
+          "西北区域仓",
+          "海外保税仓"
+        ],
+        "affected_orders": 455,
+        "root_cause": "上架错误率异常: 上架错误率 2.20% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 3.11% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.78% 超过阈值 0.50%\n上架错误率异常: 上架错误率 2.08% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 3.21% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.61% 超过阈值 0.50%\n上架错误率异常: 上架错误率 3.33% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 5.52% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.57% 超过阈值 0.50%\n上架错误率异常: 上架错误率 4.91% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 4.80% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.63% 超过阈值 0.50%\n上架错误率异常: 上架错误率 2.74% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 5.94% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.88% 超过阈值 0.50%\n上架错误率异常: 上架错误率 4.27% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 4.38% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.80% 超过阈值 0.50%\n上架错误率异常: 上架错误率 3.57% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 5.42% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.76% 超过阈值 0.50%\n上架错误率异常: 上架错误率 3.26% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 4.49% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.97% 超过阈值 0.50%",
+        "report_path": "E:\\work\\d012\\reports\\rollback_report_VERIFY-EMERG-1781843698_20260619_123459.json",
+        "post_check_status": "unknown",
+        "post_check_need_human": false,
+        "post_check_abnormal_wh": 0,
+        "post_check_checked_wh": 0,
+        "created_at": "2026-06-19 12:34:59"
+      },
+      {
+        "rollback_id": 10,
+        "release_no": "QUICK-1781842469",
+        "version": "v1.0.0",
+        "trigger_type": "auto",
+        "status": "ROLLBACK_SUCCESS",
+        "trigger_reason": "监控指标异常: 1 个仓库超标",
+        "affected_warehouse_count": 8,
+        "affected_warehouses": [
+          "华东中心仓",
+          "华南中心仓",
+          "华北中心仓",
+          "西南区域仓",
+          "华中区域仓",
+          "东北区域仓",
+          "西北区域仓",
+          "海外保税仓"
+        ],
+        "affected_orders": 75,
+        "root_cause": "上架错误率异常: 上架错误率 3.06% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 4.08% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.68% 超过阈值 0.50%",
+        "report_path": "E:\\work\\d012\\reports\\rollback_report_QUICK-1781842469_20260619_121435.json",
+        "post_check_status": "unknown",
+        "post_check_need_human": false,
+        "post_check_abnormal_wh": 0,
+        "post_check_checked_wh": 0,
+        "created_at": "2026-06-19 12:14:35"
+      },
+      {
+        "rollback_id": 9,
+        "release_no": "E2E-1-1781842365",
+        "version": "v1.0.0",
+        "trigger_type": "auto",
+        "status": "ROLLBACK_SUCCESS",
+        "trigger_reason": "监控指标异常: 1 个仓库超标",
+        "affected_warehouse_count": 8,
+        "affected_warehouses": [
+          "华东中心仓",
+          "华南中心仓",
+          "华北中心仓",
+          "西南区域仓",
+          "华中区域仓",
+          "东北区域仓",
+          "西北区域仓",
+          "海外保税仓"
+        ],
+        "affected_orders": 113,
+        "root_cause": "上架错误率异常: 上架错误率 4.83% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 4.99% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.54% 超过阈值 0.50%",
+        "report_path": "E:\\work\\d012\\reports\\rollback_report_E2E-1-1781842365_20260619_121250.json",
+        "post_check_status": "unknown",
+        "post_check_need_human": false,
+        "post_check_abnormal_wh": 0,
+        "post_check_checked_wh": 0,
+        "created_at": "2026-06-19 12:12:50"
+      },
+      {
+        "rollback_id": 8,
+        "release_no": "E2E-4-1781842360",
+        "version": "v4.0.0-OTHER",
+        "trigger_type": "auto",
+        "status": "ROLLBACK_SUCCESS",
+        "trigger_reason": "监控指标异常: 8 个仓库超标",
+        "affected_warehouse_count": 8,
+        "affected_warehouses": [
+          "华东中心仓",
+          "华南中心仓",
+          "华北中心仓",
+          "西南区域仓",
+          "华中区域仓",
+          "东北区域仓",
+          "西北区域仓",
+          "海外保税仓"
+        ],
+        "affected_orders": 524,
+        "root_cause": "上架错误率异常: 上架错误率 4.19% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 5.83% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.61% 超过阈值 0.50%\n上架错误率异常: 上架错误率 4.16% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 5.97% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.51% 超过阈值 0.50%\n上架错误率异常: 上架错误率 4.08% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 5.24% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.98% 超过阈值 0.50%\n上架错误率异常: 上架错误率 2.10% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 3.05% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.89% 超过阈值 0.50%\n上架错误率异常: 上架错误率 3.28% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 5.63% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.56% 超过阈值 0.50%\n上架错误率异常: 上架错误率 3.08% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 4.22% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.55% 超过阈值 0.50%\n上架错误率异常: 上架错误率 2.29% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 3.42% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.89% 超过阈值 0.50%\n上架错误率异常: 上架错误率 3.06% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 3.29% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.71% 超过阈值 0.50%",
+        "report_path": "E:\\work\\d012\\reports\\rollback_report_E2E-4-1781842360_20260619_121241.json",
+        "post_check_status": "unknown",
+        "post_check_need_human": false,
+        "post_check_abnormal_wh": 0,
+        "post_check_checked_wh": 0,
+        "created_at": "2026-06-19 12:12:41"
+      },
+      {
+        "rollback_id": 7,
+        "release_no": "E2E-3-1781842358",
+        "version": "v3.0.0",
+        "trigger_type": "auto",
+        "status": "ROLLBACK_SUCCESS",
+        "trigger_reason": "监控指标异常: 8 个仓库超标",
+        "affected_warehouse_count": 8,
+        "affected_warehouses": [
+          "华东中心仓",
+          "华南中心仓",
+          "华北中心仓",
+          "西南区域仓",
+          "华中区域仓",
+          "东北区域仓",
+          "西北区域仓",
+          "海外保税仓"
+        ],
+        "affected_orders": 686,
+        "root_cause": "上架错误率异常: 上架错误率 4.04% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 4.20% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.58% 超过阈值 0.50%\n上架错误率异常: 上架错误率 3.90% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 3.96% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.63% 超过阈值 0.50%\n上架错误率异常: 上架错误率 4.72% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 5.52% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.82% 超过阈值 0.50%\n上架错误率异常: 上架错误率 3.03% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 4.71% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.95% 超过阈值 0.50%\n上架错误率异常: 上架错误率 4.60% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 3.94% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.85% 超过阈值 0.50%\n上架错误率异常: 上架错误率 2.39% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 4.14% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.99% 超过阈值 0.50%\n上架错误率异常: 上架错误率 3.91% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 5.97% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.79% 超过阈值 0.50%\n上架错误率异常: 上架错误率 4.14% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 4.97% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.83% 超过阈值 0.50%",
+        "report_path": "E:\\work\\d012\\reports\\rollback_report_E2E-3-1781842358_20260619_121238.json",
+        "post_check_status": "unknown",
+        "post_check_need_human": false,
+        "post_check_abnormal_wh": 0,
+        "post_check_checked_wh": 0,
+        "created_at": "2026-06-19 12:12:38"
+      },
+      {
+        "rollback_id": 6,
+        "release_no": "E2E-EMERG-1781837489",
+        "version": "v9.9.9-e2e",
+        "trigger_type": "auto",
+        "status": "ROLLBACK_SUCCESS",
+        "trigger_reason": "监控指标异常: 8 个仓库超标",
+        "affected_warehouse_count": 8,
+        "affected_warehouses": [
+          "华东中心仓",
+          "华南中心仓",
+          "华北中心仓",
+          "西南区域仓",
+          "华中区域仓",
+          "东北区域仓",
+          "西北区域仓",
+          "海外保税仓"
+        ],
+        "affected_orders": 554,
+        "root_cause": "上架错误率异常: 上架错误率 4.79% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 4.92% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.51% 超过阈值 0.50%\n上架错误率异常: 上架错误率 2.01% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 3.84% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.56% 超过阈值 0.50%\n上架错误率异常: 上架错误率 3.69% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 5.72% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.75% 超过阈值 0.50%\n上架错误率异常: 上架错误率 3.58% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 5.60% 超过阈值 3.00%\n上架错误率异常: 上架错误率 2.54% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 4.91% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.58% 超过阈值 0.50%\n上架错误率异常: 上架错误率 2.40% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 3.89% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.97% 超过阈值 0.50%\n上架错误率异常: 上架错误率 3.50% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 4.65% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.95% 超过阈值 0.50%\n上架错误率异常: 上架错误率 3.79% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 3.09% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.90% 超过阈值 0.50%",
+        "report_path": "E:\\work\\d012\\reports\\rollback_report_E2E-EMERG-1781837489_20260619_105129.json",
+        "post_check_status": "unknown",
+        "post_check_need_human": false,
+        "post_check_abnormal_wh": 0,
+        "post_check_checked_wh": 0,
+        "created_at": "2026-06-19 10:51:29"
+      },
+      {
+        "rollback_id": 5,
+        "release_no": "E2E-EMERG-1781837349",
+        "version": "v9.9.9-e2e",
+        "trigger_type": "auto",
+        "status": "ROLLBACK_FAILED",
+        "trigger_reason": "监控指标异常: 8 个仓库超标",
+        "affected_warehouse_count": 8,
+        "affected_warehouses": [
+          "华东中心仓",
+          "华南中心仓",
+          "华北中心仓",
+          "西南区域仓",
+          "华中区域仓",
+          "东北区域仓",
+          "西北区域仓",
+          "海外保税仓"
+        ],
+        "affected_orders": 708,
+        "root_cause": "上架错误率异常: 上架错误率 3.26% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 5.83% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.61% 超过阈值 0.50%\n上架错误率异常: 上架错误率 3.47% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 4.05% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.94% 超过阈值 0.50%\n上架错误率异常: 上架错误率 3.61% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 4.02% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.76% 超过阈值 0.50%\n上架错误率异常: 上架错误率 2.92% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 4.39% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.82% 超过阈值 0.50%\n上架错误率异常: 上架错误率 2.26% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 5.49% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.79% 超过阈值 0.50%\n上架错误率异常: 上架错误率 4.09% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 3.11% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.72% 超过阈值 0.50%\n上架错误率异常: 上架错误率 3.08% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 3.64% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.91% 超过阈值 0.50%\n上架错误率异常: 上架错误率 2.25% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 3.70% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.83% 超过阈值 0.50%",
+        "report_path": "E:\\work\\d012\\reports\\rollback_report_E2E-EMERG-1781837349_20260619_104909.json",
+        "post_check_status": "unknown",
+        "post_check_need_human": false,
+        "post_check_abnormal_wh": 0,
+        "post_check_checked_wh": 0,
+        "created_at": "2026-06-19 10:49:09"
+      },
+      {
+        "rollback_id": 4,
+        "release_no": "E2E-EMERG-1781837209",
+        "version": "v9.9.9-e2e",
+        "trigger_type": "auto",
+        "status": "ROLLBACK_FAILED",
+        "trigger_reason": "监控指标异常: 8 个仓库超标",
+        "affected_warehouse_count": 8,
+        "affected_warehouses": [
+          "华东中心仓",
+          "华南中心仓",
+          "华北中心仓",
+          "西南区域仓",
+          "华中区域仓",
+          "东北区域仓",
+          "西北区域仓",
+          "海外保税仓"
+        ],
+        "affected_orders": 423,
+        "root_cause": "上架错误率异常: 上架错误率 3.73% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 5.59% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.97% 超过阈值 0.50%\n上架错误率异常: 上架错误率 2.01% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 4.64% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.59% 超过阈值 0.50%\n上架错误率异常: 上架错误率 3.49% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 5.60% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.55% 超过阈值 0.50%\n上架错误率异常: 上架错误率 2.13% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 5.14% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.53% 超过阈值 0.50%\n上架错误率异常: 上架错误率 2.21% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 4.47% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.76% 超过阈值 0.50%\n上架错误率异常: 上架错误率 3.72% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 5.55% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.64% 超过阈值 0.50%\n上架错误率异常: 上架错误率 3.91% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 4.60% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.77% 超过阈值 0.50%\n上架错误率异常: 上架错误率 3.47% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 4.65% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.79% 超过阈值 0.50%",
+        "report_path": "E:\\work\\d012\\reports\\rollback_report_E2E-EMERG-1781837209_20260619_104649.json",
+        "post_check_status": "unknown",
+        "post_check_need_human": false,
+        "post_check_abnormal_wh": 0,
+        "post_check_checked_wh": 0,
+        "created_at": "2026-06-19 10:46:49"
+      },
+      {
+        "rollback_id": 3,
+        "release_no": "TEST-EMERG-002",
+        "version": "v9.9.9-emerg",
+        "trigger_type": "auto",
+        "status": "ROLLBACK_SUCCESS",
+        "trigger_reason": "监控指标异常: 8 个仓库超标",
+        "affected_warehouse_count": 0,
+        "affected_warehouses": [],
+        "affected_orders": 635,
+        "root_cause": "上架错误率异常: 上架错误率 4.65% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 3.74% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.56% 超过阈值 0.50%\n上架错误率异常: 上架错误率 4.72% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 4.71% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.80% 超过阈值 0.50%\n上架错误率异常: 上架错误率 4.32% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 4.00% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.55% 超过阈值 0.50%\n上架错误率异常: 上架错误率 3.23% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 4.61% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.61% 超过阈值 0.50%\n上架错误率异常: 上架错误率 3.35% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 4.97% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.60% 超过阈值 0.50%\n上架错误率异常: 上架错误率 3.69% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 4.13% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.75% 超过阈值 0.50%\n上架错误率异常: 上架错误率 3.71% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 4.02% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.69% 超过阈值 0.50%\n上架错误率异常: 上架错误率 2.33% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 3.37% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.70% 超过阈值 0.50%",
+        "report_path": "E:\\work\\d012\\reports\\rollback_report_TEST-EMERG-002_20260619_103016.json",
+        "post_check_status": "unknown",
+        "post_check_need_human": false,
+        "post_check_abnormal_wh": 0,
+        "post_check_checked_wh": 0,
+        "created_at": "2026-06-19 10:30:16"
+      },
+      {
+        "rollback_id": 2,
+        "release_no": "TEST-EMERG-002",
+        "version": "v9.9.9-emerg",
+        "trigger_type": "auto",
+        "status": "ROLLBACK_SUCCESS",
+        "trigger_reason": "监控指标异常: 1 个仓库超标",
+        "affected_warehouse_count": 0,
+        "affected_warehouses": [],
+        "affected_orders": 110,
+        "root_cause": "上架错误率异常: 上架错误率 2.70% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 4.47% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.88% 超过阈值 0.50%",
+        "report_path": "E:\\work\\d012\\reports\\rollback_report_TEST-EMERG-002_20260619_103004.json",
+        "post_check_status": "unknown",
+        "post_check_need_human": false,
+        "post_check_abnormal_wh": 0,
+        "post_check_checked_wh": 0,
+        "created_at": "2026-06-19 10:30:04"
+      },
+      {
+        "rollback_id": 1,
+        "release_no": "REL-20260619_093038",
+        "version": "v2.0619.38",
+        "trigger_type": "auto",
+        "status": "ROLLBACK_FAILED",
+        "trigger_reason": "监控指标异常",
+        "affected_warehouse_count": 8,
+        "affected_warehouses": [
+          "华东中心仓",
+          "华南中心仓",
+          "华北中心仓",
+          "西南区域仓",
+          "华中区域仓",
+          "东北区域仓",
+          "西北区域仓",
+          "海外保税仓"
+        ],
+        "affected_orders": 727,
+        "root_cause": "上架错误率异常: 上架错误率 2.21% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 5.75% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.87% 超过阈值 0.50%\n上架错误率异常: 上架错误率 4.47% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 5.72% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.83% 超过阈值 0.50%\n上架错误率异常: 上架错误率 4.12% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 3.64% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.63% 超过阈值 0.50%\n上架错误率异常: 上架错误率 4.65% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 5.74% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.51% 超过阈值 0.50%\n上架错误率异常: 上架错误率 2.44% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 5.21% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.71% 超过阈值 0.50%\n上架错误率异常: 上架错误率 2.58% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 3.59% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.90% 超过阈值 0.50%\n上架错误率异常: 上架错误率 2.52% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 5.10% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.68% 超过阈值 0.50%\n上架错误率异常: 上架错误率 3.28% 超过阈值 2.00%\n出库延迟异常: 出库延迟率 3.63% 超过阈值 3.00%\n库存差异异常: 库存差异率 0.65% 超过阈值 0.50%",
+        "report_path": "E:\\work\\d012\\reports\\rollback_report_REL-20260619_093038_20260619_093044.json",
+        "post_check_status": "unknown",
+        "post_check_need_human": false,
+        "post_check_abnormal_wh": 0,
+        "post_check_checked_wh": 0,
+        "created_at": "2026-06-19 09:30:44"
+      }
+    ]
+  }
 }

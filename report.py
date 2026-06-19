@@ -64,6 +64,64 @@ class ReportEngine:
         rollbacks = db.get_rollback_records(start_time=start, end_time=end)
         drills = db.list_drills(start_time=start, end_time=end, limit=100)
 
+        rb_success = sum(1 for r in rollbacks if r['status'] == 'ROLLBACK_SUCCESS')
+        rb_failed = sum(1 for r in rollbacks if r['status'] == 'ROLLBACK_FAILED')
+        rb_manual = sum(1 for r in rollbacks if r.get('trigger_type') == 'manual')
+        rb_auto = sum(1 for r in rollbacks if r.get('trigger_type') == 'auto')
+        rb_need_human = 0
+        rb_total_wh = 0
+        rb_total_orders = 0
+        rb_review_detail = []
+
+        for r in rollbacks:
+            affected_wh_str = r.get('affected_warehouses', '')
+            try:
+                wh_list = json.loads(affected_wh_str) if isinstance(affected_wh_str, str) and affected_wh_str else (affected_wh_str or [])
+            except:
+                wh_list = [affected_wh_str] if affected_wh_str else []
+            rb_total_wh += len(wh_list)
+            rb_total_orders += r.get('affected_orders', 0)
+            post_check_str = r.get('post_rollback_check', '')
+            try:
+                post_check = json.loads(post_check_str) if isinstance(post_check_str, str) and post_check_str else {}
+            except:
+                post_check = {}
+            need_human = post_check.get('need_manual_intervention', False)
+            if need_human:
+                rb_need_human += 1
+            rel = db.get_release(release_id=r['release_id'])
+            rb_review_detail.append({
+                'rollback_id': r['id'],
+                'release_no': r['release_no'],
+                'version': rel['version'] if rel else '',
+                'trigger_type': r.get('trigger_type'),
+                'status': r['status'],
+                'trigger_reason': r.get('trigger_reason'),
+                'affected_warehouse_count': len(wh_list),
+                'affected_warehouses': wh_list,
+                'affected_orders': r.get('affected_orders', 0),
+                'root_cause': r.get('root_cause', ''),
+                'report_path': r.get('report_path', ''),
+                'post_check_status': post_check.get('status', 'unknown'),
+                'post_check_need_human': need_human,
+                'post_check_abnormal_wh': post_check.get('abnormal_warehouses', 0),
+                'post_check_checked_wh': post_check.get('checked_warehouses', 0),
+                'created_at': r.get('created_at', r.get('started_at', '')),
+            })
+
+        rollback_review = {
+            'total_rollbacks': len(rollbacks),
+            'success_count': rb_success,
+            'failed_count': rb_failed,
+            'success_rate': round(rb_success / len(rollbacks) * 100, 2) if len(rollbacks) > 0 else 0,
+            'auto_count': rb_auto,
+            'manual_count': rb_manual,
+            'total_affected_warehouses': rb_total_wh,
+            'total_affected_orders': rb_total_orders,
+            'need_manual_intervention_count': rb_need_human,
+            'details': rb_review_detail,
+        }
+
         report_data = {
             'report_title': 'WMS 系统发布周度统计报告',
             'week_range': f"{start.split()[0]} ~ {end.split()[0]}",
@@ -90,6 +148,7 @@ class ReportEngine:
             'releases': releases,
             'rollbacks': rollbacks,
             'drills': drills,
+            'rollback_review': rollback_review,
         }
 
         outputs = {}
@@ -165,6 +224,29 @@ class ReportEngine:
                     f"  {rb['release_no']} | {rb['trigger_type']} | "
                     f"影响订单 {rb['affected_orders']} | {rb['started_at']}"
                 )
+            lines.append("")
+
+        rr = data.get('rollback_review', {})
+        if rr and rr.get('total_rollbacks', 0) > 0:
+            lines.append("-" * 50)
+            lines.append("【回滚复盘】")
+            lines.append(f"  回滚总数:         {rr.get('total_rollbacks', 0)}")
+            lines.append(f"  成功数:           {rr.get('success_count', 0)}")
+            lines.append(f"  失败数:           {rr.get('failed_count', 0)}")
+            lines.append(f"  回滚成功率:       {rr.get('success_rate', 0):.2f}%")
+            lines.append(f"  自动回滚数:       {rr.get('auto_count', 0)}")
+            lines.append(f"  手动回滚数:       {rr.get('manual_count', 0)}")
+            lines.append(f"  总影响仓库数:     {rr.get('total_affected_warehouses', 0)}")
+            lines.append(f"  总影响订单数:     {rr.get('total_affected_orders', 0)}")
+            lines.append(f"  需人工介入:       {rr.get('need_manual_intervention_count', 0)}")
+            lines.append("")
+            for d in rr.get('details', []):
+                need_human = " [需人工介入]" if d.get('post_check_need_human') else ""
+                lines.append(f"  * {d['release_no']} ({d.get('version', '')}) [{d.get('trigger_type')}] -> {d.get('status')}")
+                lines.append(f"    影响仓库: {d.get('affected_warehouse_count', 0)} 个, 影响订单: {d.get('affected_orders', 0)}")
+                lines.append(f"    复查结果: {d.get('post_check_status', 'unknown')}{need_human}")
+                if d.get('report_path'):
+                    lines.append(f"    报告路径: {d['report_path']}")
             lines.append("")
 
         if data['drills']:
@@ -285,6 +367,49 @@ class ReportEngine:
                 cell.fill = header_fill
                 cell.alignment = center_align
 
+        rr = data.get('rollback_review', {})
+        if rr and rr.get('total_rollbacks', 0) > 0:
+            ws6 = wb.create_sheet("回滚复盘汇总")
+            ws6.append(["指标", "数值"])
+            ws6.append(["回滚总数", rr.get('total_rollbacks', 0)])
+            ws6.append(["成功数", rr.get('success_count', 0)])
+            ws6.append(["失败数", rr.get('failed_count', 0)])
+            ws6.append(["回滚成功率(%)", rr.get('success_rate', 0)])
+            ws6.append(["自动回滚数", rr.get('auto_count', 0)])
+            ws6.append(["手动回滚数", rr.get('manual_count', 0)])
+            ws6.append(["总影响仓库数", rr.get('total_affected_warehouses', 0)])
+            ws6.append(["总影响订单数", rr.get('total_affected_orders', 0)])
+            ws6.append(["需人工介入", rr.get('need_manual_intervention_count', 0)])
+            for row in ws6.iter_rows(min_row=1, max_row=1, max_col=2):
+                for cell in row:
+                    cell.font = header_font
+                    cell.fill = header_fill
+                    cell.alignment = center_align
+
+            ws7 = wb.create_sheet("回滚复盘明细")
+            rev_headers = ["发布单号", "版本", "触发类型", "状态", "影响仓库数",
+                           "影响仓库名称", "影响订单", "复查结果", "需人工介入",
+                           "复查异常仓库数", "复查仓库总数", "报告路径"]
+            ws7.append(rev_headers)
+            for d in rr.get('details', []):
+                ws7.append([
+                    d.get('release_no', ''), d.get('version', ''),
+                    d.get('trigger_type', ''), d.get('status', ''),
+                    d.get('affected_warehouse_count', 0),
+                    ', '.join(d.get('affected_warehouses', []) or []),
+                    d.get('affected_orders', 0),
+                    d.get('post_check_status', 'unknown'),
+                    '是' if d.get('post_check_need_human') else '否',
+                    d.get('post_check_abnormal_wh', 0),
+                    d.get('post_check_checked_wh', 0),
+                    d.get('report_path', ''),
+                ])
+            for row in ws7.iter_rows(min_row=1, max_row=1, max_col=len(rev_headers)):
+                for cell in row:
+                    cell.font = header_font
+                    cell.fill = header_fill
+                    cell.alignment = center_align
+
         for ws in wb.worksheets:
             for col_cells in ws.columns:
                 max_length = 0
@@ -365,6 +490,55 @@ class ReportEngine:
                 ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
             ]))
             elements.append(t3)
+        elements.append(Spacer(1, 20))
+
+        rr = data.get('rollback_review', {})
+        if rr and rr.get('total_rollbacks', 0) > 0:
+            elements.append(Paragraph("回滚复盘", h2_style))
+            rr_data = [
+                ['指标', '数值'],
+                ['回滚总数', str(rr.get('total_rollbacks', 0))],
+                ['成功数', str(rr.get('success_count', 0))],
+                ['失败数', str(rr.get('failed_count', 0))],
+                ['回滚成功率', f"{rr.get('success_rate', 0):.2f}%"],
+                ['自动回滚数', str(rr.get('auto_count', 0))],
+                ['手动回滚数', str(rr.get('manual_count', 0))],
+                ['总影响仓库数', str(rr.get('total_affected_warehouses', 0))],
+                ['总影响订单数', str(rr.get('total_affected_orders', 0))],
+                ['需人工介入', str(rr.get('need_manual_intervention_count', 0))],
+            ]
+            t4 = Table(rr_data, colWidths=[200, 100])
+            t4.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#C00000')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+            ]))
+            elements.append(t4)
+            elements.append(Spacer(1, 10))
+
+            if rr.get('details'):
+                elements.append(Paragraph("回滚复盘明细", styles['Heading3']))
+                det_data = [['发布单号', '触发', '状态', '影响仓库', '影响订单', '复查']]
+                for d in rr['details']:
+                    need_human = " (需人工)" if d.get('post_check_need_human') else ""
+                    det_data.append([
+                        str(d.get('release_no', ''))[:14],
+                        str(d.get('trigger_type', '')),
+                        str(d.get('status', ''))[:8],
+                        str(d.get('affected_warehouse_count', 0)),
+                        str(d.get('affected_orders', 0)),
+                        str(d.get('post_check_status', '')) + need_human,
+                    ])
+                t5 = Table(det_data, colWidths=[90, 40, 70, 50, 50, 90])
+                t5.setStyle(TableStyle([
+                    ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#7030A0')),
+                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+                    ('FONTSIZE', (0, 0), (-1, -1), 8),
+                    ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+                ]))
+                elements.append(t5)
+            elements.append(Spacer(1, 20))
 
         doc.build(elements)
         return path
@@ -727,26 +901,41 @@ class WeeklyReportScheduler:
 
     def run_now(self):
         log.info("[周报告调度器] 手动触发周报告生成")
-        engine = ReportEngine()
-        result = engine.generate_weekly_report()
-        files = result.get('files', {})
         today_str = datetime.now().strftime('%Y-%m-%d')
-        self._set_last_run_date(today_str)
+        try:
+            engine = ReportEngine()
+            result = engine.generate_weekly_report()
+            files = result.get('files', {})
+            self._set_last_run_date(today_str)
 
-        log.info(f"[周报告调度器] 手动生成成功, 共 {len(files)} 个文件:")
-        for fmt, path in sorted(files.items()):
-            log.info(f"[周报告调度器]   [{fmt.upper()}] {path}")
+            log.info(f"[周报告调度器] 手动生成成功, 共 {len(files)} 个文件:")
+            for fmt, path in sorted(files.items()):
+                log.info(f"[周报告调度器]   [{fmt.upper()}] {path}")
 
-        log.audit("手动触发生成周报告", "system", "weekly_report",
-                  details={
-                      "date": today_str,
-                      "files": files,
-                      "file_count": len(files),
-                      "generated_at": get_current_time_str(),
-                      "status": "success",
-                      "trigger": "manual",
-                  })
-        return result
+            log.audit("手动触发生成周报告", "system", "weekly_report",
+                      details={
+                          "date": today_str,
+                          "files": files,
+                          "file_count": len(files),
+                          "generated_at": get_current_time_str(),
+                          "status": "success",
+                          "trigger": "manual",
+                      })
+            return {'success': True, 'result': result}
+        except Exception as e:
+            import traceback
+            err_detail = traceback.format_exc()
+            log.error(f"[周报告调度器] 手动生成周报告失败: {str(e)}")
+            log.error(f"[周报告调度器] 失败详情:\n{err_detail}")
+            log.audit("手动触发生成周报告失败", "system", "weekly_report",
+                      details={
+                          "date": today_str,
+                          "error": str(e),
+                          "traceback": err_detail,
+                          "status": "failed",
+                          "trigger": "manual",
+                      })
+            return {'success': False, 'error': str(e), 'traceback': err_detail}
 
 
 weekly_scheduler = WeeklyReportScheduler()

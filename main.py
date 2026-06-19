@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 
 from config import (
     WAREHOUSES, RELEASE_STATUS, RISK_LEVELS, APPROVERS,
-    get_current_time_str, get_timestamp, MONITOR_THRESHOLDS
+    get_current_time_str, get_timestamp, MONITOR_THRESHOLDS, EXPORT_DIR
 )
 from logger import log
 from database import db
@@ -415,6 +415,159 @@ def cmd_start_monitor(args):
         monitor_daemon.start()
 
 
+def cmd_rollback_dispatch(args):
+    """rollback 命令分发"""
+    sub = getattr(args, 'rollback_subcommand', None)
+    if sub == 'summary':
+        cmd_rollback_summary(args)
+        return
+    cmd_rollback(args)
+
+
+def cmd_rollback_summary(args):
+    """回滚汇总"""
+    release_id = getattr(args, 'release_id', None)
+    release_no = getattr(args, 'release_no', None)
+    start_time = getattr(args, 'start_time', None)
+    end_time = getattr(args, 'end_time', None)
+    export_format = getattr(args, 'format', None)
+
+    target_rid = None
+    if release_no:
+        rel = db.get_release(release_no=release_no)
+        if rel:
+            target_rid = rel['id']
+    elif release_id:
+        target_rid = release_id
+
+    all_rbs = db.get_rollback_records(
+        start_time=start_time, end_time=end_time
+    )
+    if target_rid:
+        all_rbs = [r for r in all_rbs if r['release_id'] == target_rid]
+
+    total = len(all_rbs)
+    success = sum(1 for r in all_rbs if r['status'] == 'ROLLBACK_SUCCESS')
+    failed = sum(1 for r in all_rbs if r['status'] == 'ROLLBACK_FAILED')
+    other = total - success - failed
+
+    total_warehouses = 0
+    total_orders = 0
+    report_paths = []
+    per_rb = []
+
+    for r in all_rbs:
+        rel = db.get_release(release_id=r['release_id'])
+        affected_wh_str = r.get('affected_warehouses', '')
+        try:
+            wh_list = json.loads(affected_wh_str) if isinstance(affected_wh_str, str) and affected_wh_str else (affected_wh_str or [])
+        except:
+            wh_list = [affected_wh_str] if affected_wh_str else []
+        total_warehouses += len(wh_list)
+        total_orders += r.get('affected_orders', 0)
+        if r.get('report_path'):
+            report_paths.append(r['report_path'])
+
+        per_rb.append({
+            'rollback_id': r['id'],
+            'release_id': r['release_id'],
+            'release_no': rel['release_no'] if rel else '',
+            'version': rel['version'] if rel else '',
+            'trigger_type': r['trigger_type'],
+            'status': r['status'],
+            'trigger_reason': r.get('trigger_reason', ''),
+            'affected_warehouse_count': len(wh_list),
+            'affected_warehouses': wh_list,
+            'affected_orders': r.get('affected_orders', 0),
+            'root_cause': r.get('root_cause', ''),
+            'report_path': r.get('report_path', ''),
+            'created_at': r.get('created_at', ''),
+        })
+
+    summary = {
+        'generated_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        'filter': {
+            'release_id': target_rid,
+            'release_no': release_no,
+            'start_time': start_time,
+            'end_time': end_time,
+        },
+        'totals': {
+            'rollback_count': total,
+            'success_count': success,
+            'failed_count': failed,
+            'other_count': other,
+            'success_rate': (success / total * 100) if total > 0 else 0,
+            'total_affected_warehouses': total_warehouses,
+            'total_affected_orders': total_orders,
+            'report_count': len(report_paths),
+        },
+        'rollbacks': per_rb,
+    }
+
+    print(f"\n{'='*60}")
+    print(f"  回滚汇总报告")
+    print(f"{'='*60}")
+    print(f"  筛选条件: release_id={target_rid or '-'}, release_no={release_no or '-'}, "
+          f"时间={start_time or '-'}~{end_time or '-'}")
+    print(f"{'-'*60}")
+    print(f"  回滚总数:     {total}")
+    print(f"  成功:         {success}")
+    print(f"  失败:         {failed}")
+    print(f"  其他:         {other}")
+    print(f"  成功率:       {(success / total * 100):.1f}%" if total > 0 else "  成功率:       N/A")
+    print(f"  总影响仓库:   {total_warehouses}")
+    print(f"  总影响订单:   {total_orders}")
+    print(f"  报告文件数:   {len(report_paths)}")
+    print(f"{'-'*60}")
+    print(f"  明细:")
+    for r in per_rb:
+        print(f"    [{r['trigger_type']}] {r['release_no']} ({r['version']}) -> {r['status']}")
+        print(f"       影响仓库: {r['affected_warehouse_count']} 个, 影响订单: {r['affected_orders']}")
+        if r['report_path']:
+            print(f"       报告路径: {r['report_path']}")
+    print(f"{'='*60}")
+
+    if export_format == 'json':
+        os.makedirs(EXPORT_DIR, exist_ok=True)
+        ts = datetime.now().strftime('%Y%m%d_%H%M%S')
+        path = os.path.join(EXPORT_DIR, f'rollback_summary_{ts}.json')
+        with open(path, 'w', encoding='utf-8') as f:
+            json.dump(summary, f, ensure_ascii=False, indent=2)
+        print(f"\n已导出 JSON: {path}")
+    elif export_format == 'txt':
+        os.makedirs(EXPORT_DIR, exist_ok=True)
+        ts = datetime.now().strftime('%Y%m%d_%H%M%S')
+        path = os.path.join(EXPORT_DIR, f'rollback_summary_{ts}.txt')
+        with open(path, 'w', encoding='utf-8') as f:
+            f.write("=" * 60 + "\n")
+            f.write("  WMS 回滚汇总报告\n")
+            f.write("=" * 60 + "\n")
+            t = summary['totals']
+            f.write(f"生成时间:       {summary['generated_at']}\n")
+            f.write(f"回滚总数:       {t['rollback_count']}\n")
+            f.write(f"成功数:         {t['success_count']}\n")
+            f.write(f"失败数:         {t['failed_count']}\n")
+            f.write(f"成功率:         {t['success_rate']:.1f}%\n")
+            f.write(f"总影响仓库数:   {t['total_affected_warehouses']}\n")
+            f.write(f"总影响订单数:   {t['total_affected_orders']}\n\n")
+            f.write("明细:\n")
+            for r in per_rb:
+                f.write(f"\n  [{r['trigger_type']}] {r['release_no']} ({r['version']})\n")
+                f.write(f"    状态:       {r['status']}\n")
+                f.write(f"    触发原因:   {r['trigger_reason']}\n")
+                f.write(f"    影响仓库:   {r['affected_warehouse_count']} 个\n")
+                wh_names = ', '.join(r['affected_warehouses'])
+                if wh_names:
+                    f.write(f"                {wh_names}\n")
+                f.write(f"    影响订单:   {r['affected_orders']}\n")
+                if r['root_cause']:
+                    f.write(f"    根因:       {r['root_cause'][:200]}\n")
+                if r['report_path']:
+                    f.write(f"    报告路径:   {r['report_path']}\n")
+        print(f"\n已导出 TXT:  {path}")
+
+
 def cmd_rollback(args):
     """手动触发回滚"""
     release_id = args.release_id
@@ -571,9 +724,15 @@ def cmd_report(args):
         elif sched_sub == 'run-now':
             print("立即生成周报告...")
             result = weekly_scheduler.run_now()
-            print(f"\n生成完成，文件路径:")
-            for fmt, path in result.get('files', {}).items():
-                print(f"  [{fmt.upper()}] {path}")
+            if result.get('success'):
+                inner = result.get('result', {})
+                print(f"\n生成完成，文件路径:")
+                for fmt, path in inner.get('files', {}).items():
+                    print(f"  [{fmt.upper()}] {path}")
+            else:
+                print(f"\n[错误] 生成周报告失败!")
+                print(f"  错误原因: {result.get('error', '未知错误')}")
+                print(f"  详情请查看日志文件: logs/wms_release.log 和 logs/audit_trail.log")
         else:
             print("请指定子命令: start/stop/status/run/run-now")
 
